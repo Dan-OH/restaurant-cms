@@ -3,10 +3,11 @@ import { Alert, Button, CloseButton, Dialog, Field, Input, Portal, Stack, Switch
 import { supabase } from '../lib/supabase.js'
 import { HOME_SLUG, RESERVED_SLUGS, slugify } from '../lib/site.js'
 
-const EMPTY = { title: '', slug: '', published: true, show_in_nav: true, nav_order: 0 }
+const EMPTY = { title: '', slug: '', published: true, show_in_nav: true }
 
 // Modal for both creating a page (page = null) and editing an existing one.
-export default function PageFormDialog({ open, page, onClose, onSaved }) {
+// New pages are saved with nav_order = nextNavOrder, which puts them at the bottom of the list.
+export default function PageFormDialog({ open, page, nextNavOrder, onClose, onSaved }) {
   const formId = useId()
   const titleRef = useRef(null)
   const [saving, setSaving] = useState(false)
@@ -34,6 +35,7 @@ export default function PageFormDialog({ open, page, onClose, onSaved }) {
                 formId={formId}
                 titleRef={titleRef}
                 page={page}
+                nextNavOrder={nextNavOrder}
                 setSaving={setSaving}
                 onSaved={onSaved}
               />
@@ -56,7 +58,7 @@ export default function PageFormDialog({ open, page, onClose, onSaved }) {
   )
 }
 
-function PageFormFields({ formId, titleRef, page, setSaving, onSaved }) {
+function PageFormFields({ formId, titleRef, page, nextNavOrder, setSaving, onSaved }) {
   const isNew = !page
   const [values, setValues] = useState(() =>
     page
@@ -65,7 +67,6 @@ function PageFormFields({ formId, titleRef, page, setSaving, onSaved }) {
           slug: page.slug,
           published: page.published,
           show_in_nav: page.show_in_nav,
-          nav_order: page.nav_order,
         }
       : EMPTY,
   )
@@ -89,14 +90,15 @@ function PageFormFields({ formId, titleRef, page, setSaving, onSaved }) {
       ...values,
       title: values.title.trim(),
       slug: slugify(values.slug),
-      nav_order: Number.parseInt(values.nav_order, 10) || 0,
     }
     if (!row.title) return setError('Please enter a title.')
     if (!row.slug) return setError('Please enter a URL slug using letters or numbers.')
     if (RESERVED_SLUGS.includes(row.slug)) return setError(`The slug "${row.slug}" is reserved.`)
 
     setSaving(true)
-    const query = isNew ? supabase.from('pages').insert(row) : supabase.from('pages').update(row).eq('id', page.id)
+    const query = isNew
+      ? supabase.from('pages').insert({ ...row, nav_order: nextNavOrder })
+      : supabase.from('pages').update(row).eq('id', page.id)
     const { error } = await query
     setSaving(false)
 
@@ -152,19 +154,6 @@ function PageFormFields({ formId, titleRef, page, setSaving, onSaved }) {
           <Switch.Control />
           <Switch.Label>Show in navigation</Switch.Label>
         </Switch.Root>
-
-        {values.show_in_nav && (
-          <Field.Root>
-            <Field.Label>Navigation order</Field.Label>
-            <Input
-              type="number"
-              maxW="32"
-              value={values.nav_order}
-              onChange={(e) => set('nav_order', e.target.value)}
-            />
-            <Field.HelperText>Lower numbers appear first.</Field.HelperText>
-          </Field.Root>
-        )}
       </Stack>
     </form>
   )
