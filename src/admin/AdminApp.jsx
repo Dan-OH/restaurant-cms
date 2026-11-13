@@ -1,5 +1,5 @@
 import { ChakraProvider, defaultSystem } from '@chakra-ui/react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './AuthProvider.jsx'
 import AdminLayout from './AdminLayout.jsx'
 import LoginPage from './LoginPage.jsx'
@@ -13,8 +13,9 @@ export default function AdminApp() {
         <Routes>
           <Route path="login" element={<LoginPage />} />
           <Route element={<AdminLayout />}>
-            <Route index element={<PagesList />} />
-            <Route path="*" element={<PagesList />} />
+            <Route path="pages" element={<PagesList />} />
+            {/* Pages is the landing section for now; unknown admin URLs go there too. */}
+            <Route path="*" element={<Navigate to="/admin/pages" replace />} />
           </Route>
         </Routes>
       </AuthProvider>
