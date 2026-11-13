@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Alert, Badge, Box, Button, Center, Flex, Heading, HStack, Spinner, Table, Text } from '@chakra-ui/react'
+import { Alert, Badge, Box, Button, Center, Flex, Heading, HStack, Spinner, Text } from '@chakra-ui/react'
 import { supabase } from '../lib/supabase.js'
 import { pagePath } from '../lib/site.js'
 import DeletePageDialog from './DeletePageDialog.jsx'
 import PageFormDialog from './PageFormDialog.jsx'
 
-const DROP_LINE_COLOR = 'var(--chakra-colors-blue-solid)'
+// Shared by the header and every row so the columns line up:
+// handle | title | URL | status | navigation | actions
+const COLUMNS = '1.5rem minmax(8rem, 1.5fr) minmax(6rem, 1fr) 6rem 6rem 14rem'
 
-// The line is drawn on the cells because browsers don't reliably paint shadows on table rows.
-const DROP_LINE_ABOVE = { '& > td': { boxShadow: `inset 0 2px 0 0 ${DROP_LINE_COLOR}` } }
-const DROP_LINE_BELOW = { '& > td': { boxShadow: `inset 0 -2px 0 0 ${DROP_LINE_COLOR}` } }
+// Space between rows, and the drop line that sits centred in it.
+const ROW_GAP = '0.5rem'
+const DROP_LINE_HEIGHT = '2px'
+const DROP_LINE_OFFSET = `calc((${ROW_GAP} + ${DROP_LINE_HEIGHT}) / -2)`
 
 export default function PagesList() {
   const [pages, setPages] = useState(null)
@@ -84,10 +87,8 @@ export default function PagesList() {
     setDragIndex(index)
   }
 
-  function handleDragOver(event, index) {
+  function handleRowDragOver(event, index) {
     if (dragIndex === null) return
-    event.preventDefault()
-    event.dataTransfer.dropEffect = 'move'
     const rect = event.currentTarget.getBoundingClientRect()
     const inTopHalf = event.clientY < rect.top + rect.height / 2
     setDropIndex(inTopHalf ? index : index + 1)
@@ -115,8 +116,8 @@ export default function PagesList() {
     if (dragIndex === null || dropIndex === null) return undefined
     // No line where dropping would leave the page where it already is.
     if (dropIndex === dragIndex || dropIndex === dragIndex + 1) return undefined
-    if (dropIndex === index) return DROP_LINE_ABOVE
-    if (dropIndex === pages.length && index === pages.length - 1) return DROP_LINE_BELOW
+    if (dropIndex === index) return 'above'
+    if (dropIndex === pages.length && index === pages.length - 1) return 'below'
     return undefined
   }
 
@@ -150,37 +151,83 @@ export default function PagesList() {
 
       {pages?.length > 0 && (
         <>
-          <Box bg="bg" borderWidth="1px" borderRadius="lg" overflowX="auto">
-            <Table.Root>
-              <Table.Header>
-                <Table.Row>
-                  <Table.ColumnHeader w="10" />
-                  <Table.ColumnHeader>Title</Table.ColumnHeader>
-                  <Table.ColumnHeader>URL</Table.ColumnHeader>
-                  <Table.ColumnHeader>Status</Table.ColumnHeader>
-                  <Table.ColumnHeader>Navigation</Table.ColumnHeader>
-                  <Table.ColumnHeader />
-                </Table.Row>
-              </Table.Header>
-              <Table.Body
+          <Box overflowX="auto">
+            <Box minW="2xl">
+              <Box
+                display="grid"
+                gridTemplateColumns={COLUMNS}
+                columnGap="4"
+                px="4"
+                fontSize="sm"
+                fontWeight="medium"
+                color="fg.muted"
+              >
+                <span />
+                <span>Title</span>
+                <span>URL</span>
+                <span>Status</span>
+                <span>Navigation</span>
+                <span />
+              </Box>
+
+              {/* Drag events are handled here as well as on the rows, so the gaps between rows are valid drop targets. */}
+              <Box
+                as="ul"
+                listStyleType="none"
+                display="flex"
+                flexDirection="column"
+                gap={ROW_GAP}
+                // Room for the drop line above the first row and below the last. This has to be padding:
+                // anything drawn outside the list would overflow the horizontal scroll wrapper and add a
+                // vertical scrollbar.
+                py={ROW_GAP}
+                onDragOver={(event) => {
+                  if (dragIndex === null) return
+                  event.preventDefault()
+                  event.dataTransfer.dropEffect = 'move'
+                }}
+                onDrop={handleDrop}
                 onDragLeave={(event) => {
                   // Hide the line when the pointer leaves the list entirely.
                   if (!event.currentTarget.contains(event.relatedTarget)) setDropIndex(null)
                 }}
               >
-                {pages.map((page, index) => (
-                  <Table.Row
-                    key={page.id}
-                    ref={(element) => {
-                      if (element) rowRefs.current.set(page.id, element)
-                      else rowRefs.current.delete(page.id)
-                    }}
-                    opacity={dragIndex === index ? 0.4 : 1}
-                    css={dropLineFor(index)}
-                    onDragOver={(event) => handleDragOver(event, index)}
-                    onDrop={handleDrop}
-                  >
-                    <Table.Cell pr="0">
+                {pages.map((page, index) => {
+                  const dropLine = dropLineFor(index)
+                  return (
+                    <Box
+                      as="li"
+                      key={page.id}
+                      ref={(element) => {
+                        if (element) rowRefs.current.set(page.id, element)
+                        else rowRefs.current.delete(page.id)
+                      }}
+                      position="relative"
+                      display="grid"
+                      gridTemplateColumns={COLUMNS}
+                      columnGap="4"
+                      alignItems="center"
+                      px="4"
+                      py="3"
+                      bg="bg"
+                      borderWidth="1px"
+                      borderRadius="lg"
+                      opacity={dragIndex === index ? 0.4 : 1}
+                      onDragOver={(event) => handleRowDragOver(event, index)}
+                    >
+                      {dropLine && (
+                        <Box
+                          position="absolute"
+                          left="0"
+                          right="0"
+                          top={dropLine === 'above' ? DROP_LINE_OFFSET : undefined}
+                          bottom={dropLine === 'below' ? DROP_LINE_OFFSET : undefined}
+                          h={DROP_LINE_HEIGHT}
+                          borderRadius="full"
+                          bg="blue.solid"
+                          pointerEvents="none"
+                        />
+                      )}
                       <Box
                         as="button"
                         type="button"
@@ -203,14 +250,16 @@ export default function PagesList() {
                       >
                         <GripIcon />
                       </Box>
-                    </Table.Cell>
-                    <Table.Cell fontWeight="medium">{page.title}</Table.Cell>
-                    <Table.Cell color="fg.muted">{pagePath(page.slug)}</Table.Cell>
-                    <Table.Cell>
-                      {page.published ? <Badge colorPalette="green">Published</Badge> : <Badge>Draft</Badge>}
-                    </Table.Cell>
-                    <Table.Cell color="fg.muted">{page.show_in_nav ? 'Shown' : 'Hidden'}</Table.Cell>
-                    <Table.Cell>
+                      <Text fontWeight="medium" truncate>
+                        {page.title}
+                      </Text>
+                      <Text color="fg.muted" truncate>
+                        {pagePath(page.slug)}
+                      </Text>
+                      <Box>
+                        {page.published ? <Badge colorPalette="green">Published</Badge> : <Badge>Draft</Badge>}
+                      </Box>
+                      <Text color="fg.muted">{page.show_in_nav ? 'Shown' : 'Hidden'}</Text>
                       <HStack justify="flex-end" gap="2">
                         {page.published && (
                           <Button asChild size="sm" variant="ghost">
@@ -231,14 +280,14 @@ export default function PagesList() {
                           Delete
                         </Button>
                       </HStack>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
+                    </Box>
+                  )
+                })}
+              </Box>
+            </Box>
           </Box>
           {pages.length > 1 && (
-            <Text mt="3" fontSize="sm" color="fg.muted">
+            <Text mt="1" fontSize="sm" color="fg.muted">
               Drag the handle on the left to reorder. This is the order pages appear in the site navigation.
             </Text>
           )}
