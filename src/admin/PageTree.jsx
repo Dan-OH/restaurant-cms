@@ -1,4 +1,5 @@
-import { Badge, Box, Button, HStack, Text } from '@chakra-ui/react'
+import { useEffect, useState } from 'react'
+import { Badge, Box, Button, HStack, Portal, Text, Tooltip } from '@chakra-ui/react'
 import { ROOT } from '../lib/pageTree.js'
 import ExternalLinkButton from './ExternalLinkButton.jsx'
 import FaIcon from './FaIcon.jsx'
@@ -132,9 +133,7 @@ function PageCells({ page, ctx }) {
       <Text fontWeight="medium" truncate>
         {page.title}
       </Text>
-      <Text color="fg.muted" truncate>
-        {ctx.paths.get(page.id)}
-      </Text>
+      <UrlText url={ctx.paths.get(page.id)} copyable />
       <Box>{page.published ? <Badge colorPalette="green">Published</Badge> : <Badge>Draft</Badge>}</Box>
       <Text color="fg.muted">{page.show_in_nav ? 'Shown' : 'Hidden'}</Text>
       <HStack justify="flex-end" gap="2">
@@ -167,9 +166,7 @@ function GroupCells({ group, ctx }) {
         </Text>
       </HStack>
       {/* The start of the address of everything inside the group. */}
-      <Text color="fg.muted" truncate>
-        {ctx.paths.get(group.id)}/…
-      </Text>
+      <UrlText url={`${ctx.paths.get(group.id)}/`} />
       {/* Spans the status and navigation columns, which don't apply to a group. */}
       <Text color="fg.muted" gridColumn="span 2" truncate>
         Group · {count === 1 ? '1 item' : `${count} items`}
@@ -183,5 +180,80 @@ function GroupCells({ group, ctx }) {
         </Button>
       </HStack>
     </>
+  )
+}
+
+// A URL that is cut off with "…" when the column is too narrow; hovering shows it in full.
+// With `copyable`, clicking copies the complete link (including the site's domain) to the
+// clipboard, and the tooltip says so. Group prefixes aren't copyable: they aren't pages.
+function UrlText({ url, copyable = false }) {
+  // null | 'copied' | 'failed'; shown in the tooltip briefly after a click.
+  const [result, setResult] = useState(null)
+
+  useEffect(() => {
+    if (!result) return
+    const timer = setTimeout(() => setResult(null), 2000)
+    return () => clearTimeout(timer)
+  }, [result])
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(new URL(url, window.location.origin).href)
+      setResult('copied')
+    } catch {
+      // Browsers only allow clipboard access on https (or localhost).
+      setResult('failed')
+    }
+  }
+
+  let hint = 'Click to copy link'
+  if (result === 'copied') hint = 'Link copied'
+  if (result === 'failed') hint = 'Could not copy'
+
+  const text = copyable ? (
+    <Text
+      as="button"
+      type="button"
+      display="block"
+      maxW="full"
+      textAlign="left"
+      color="fg.muted"
+      cursor="pointer"
+      truncate
+      _hover={{ color: 'fg', textDecoration: 'underline' }}
+      aria-label={`Copy link to ${url}`}
+      onClick={copy}
+    >
+      {url}
+    </Text>
+  ) : (
+    <Text color="fg.muted" truncate>
+      {url}
+    </Text>
+  )
+
+  return (
+    <Tooltip.Root
+      openDelay={300}
+      closeDelay={0}
+      // Stay open on click so the "Link copied" confirmation can be seen.
+      closeOnClick={false}
+      closeOnPointerDown={false}
+      positioning={{ placement: 'top-start' }}
+    >
+      <Tooltip.Trigger asChild>{text}</Tooltip.Trigger>
+      <Portal>
+        <Tooltip.Positioner>
+          <Tooltip.Content maxW="lg">
+            <Text wordBreak="break-all">{url}</Text>
+            {copyable && (
+              <Text mt="1" opacity="0.7" aria-live="polite">
+                {hint}
+              </Text>
+            )}
+          </Tooltip.Content>
+        </Tooltip.Positioner>
+      </Portal>
+    </Tooltip.Root>
   )
 }
