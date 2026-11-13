@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Alert, Badge, Box, Button, Center, Flex, Heading, HStack, Spinner, Table, Text } from '@chakra-ui/react'
-import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { pagePath } from '../lib/site.js'
+import DeletePageDialog from './DeletePageDialog.jsx'
+import PageFormDialog from './PageFormDialog.jsx'
 
 export default function PagesList() {
   const [pages, setPages] = useState(null)
   const [error, setError] = useState('')
+  // page = null means the dialog is creating a new page.
+  const [dialog, setDialog] = useState({ open: false, page: null })
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, page: null })
 
   const load = useCallback(
     () =>
@@ -26,21 +30,11 @@ export default function PagesList() {
     load()
   }, [load])
 
-  async function handleDelete(page) {
-    if (!window.confirm(`Delete the page "${page.title}"? This cannot be undone.`)) return
-    setError('')
-    const { error } = await supabase.from('pages').delete().eq('id', page.id)
-    if (error) setError(error.message)
-    else load()
-  }
-
   return (
     <Box>
       <Flex justify="space-between" align="center" mb="6">
         <Heading size="2xl">Pages</Heading>
-        <Button asChild>
-          <Link to="/admin/pages/new">New page</Link>
-        </Button>
+        <Button onClick={() => setDialog({ open: true, page: null })}>New page</Button>
       </Flex>
 
       {error && (
@@ -94,10 +88,15 @@ export default function PagesList() {
                           </a>
                         </Button>
                       )}
-                      <Button asChild size="sm" variant="outline">
-                        <Link to={`/admin/pages/${page.id}`}>Edit</Link>
+                      <Button size="sm" variant="outline" onClick={() => setDialog({ open: true, page })}>
+                        Edit
                       </Button>
-                      <Button size="sm" variant="outline" colorPalette="red" onClick={() => handleDelete(page)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        colorPalette="red"
+                        onClick={() => setDeleteDialog({ open: true, page })}
+                      >
                         Delete
                       </Button>
                     </HStack>
@@ -108,6 +107,27 @@ export default function PagesList() {
           </Table.Root>
         </Box>
       )}
+
+      <PageFormDialog
+        open={dialog.open}
+        page={dialog.page}
+        // Keep `page` while closing so the title doesn't flip during the exit animation.
+        onClose={() => setDialog((current) => ({ ...current, open: false }))}
+        onSaved={() => {
+          setDialog((current) => ({ ...current, open: false }))
+          load()
+        }}
+      />
+
+      <DeletePageDialog
+        open={deleteDialog.open}
+        page={deleteDialog.page}
+        onClose={() => setDeleteDialog((current) => ({ ...current, open: false }))}
+        onDeleted={() => {
+          setDeleteDialog((current) => ({ ...current, open: false }))
+          load()
+        }}
+      />
     </Box>
   )
 }
