@@ -1,13 +1,15 @@
 import { useId, useRef, useState } from 'react'
 import { Alert, Button, CloseButton, Dialog, Field, Input, Portal, Stack, Switch } from '@chakra-ui/react'
 import { supabase } from '../lib/supabase.js'
+import { nextNavOrder, pagePaths, parentOf } from '../lib/pageTree.js'
 import { HOME_SLUG, RESERVED_SLUGS, slugify } from '../lib/site.js'
+import ParentGroupSelect from './ParentGroupSelect.jsx'
 
-const EMPTY = { title: '', slug: '', published: true, show_in_nav: true }
+const EMPTY = { title: '', slug: '', published: true, show_in_nav: true, parent_id: '' }
 
 // Modal for both creating a page (page = null) and editing an existing one.
-// New pages are saved with nav_order = nextNavOrder, which puts them at the bottom of the list.
-export default function PageFormDialog({ open, page, nextNavOrder, onClose, onSaved }) {
+// `pages` is every page and group, used for the group picker and to place new pages last.
+export default function PageFormDialog({ open, page, pages, onClose, onSaved }) {
   const formId = useId()
   const titleRef = useRef(null)
   const [saving, setSaving] = useState(false)
@@ -35,7 +37,7 @@ export default function PageFormDialog({ open, page, nextNavOrder, onClose, onSa
                 formId={formId}
                 titleRef={titleRef}
                 page={page}
-                nextNavOrder={nextNavOrder}
+                pages={pages}
                 setSaving={setSaving}
                 onSaved={onSaved}
               />
@@ -58,7 +60,7 @@ export default function PageFormDialog({ open, page, nextNavOrder, onClose, onSa
   )
 }
 
-function PageFormFields({ formId, titleRef, page, nextNavOrder, setSaving, onSaved }) {
+function PageFormFields({ formId, titleRef, page, pages, setSaving, onSaved }) {
   const isNew = !page
   const [values, setValues] = useState(() =>
     page
@@ -67,6 +69,7 @@ function PageFormFields({ formId, titleRef, page, nextNavOrder, setSaving, onSav
           slug: page.slug,
           published: page.published,
           show_in_nav: page.show_in_nav,
+          parent_id: page.parent_id ?? '',
         }
       : EMPTY,
   )
@@ -86,29 +89,40 @@ function PageFormFields({ formId, titleRef, page, nextNavOrder, setSaving, onSav
     event.preventDefault()
     setError('')
 
+    const parentId = values.parent_id || null
     const row = {
       ...values,
       title: values.title.trim(),
       slug: slugify(values.slug),
+      parent_id: parentId,
     }
     if (!row.title) return setError('Please enter a title.')
     if (!row.slug) return setError('Please enter a URL slug using letters or numbers.')
-    if (RESERVED_SLUGS.includes(row.slug)) return setError(`The slug "${row.slug}" is reserved.`)
+    if (!parentId && RESERVED_SLUGS.includes(row.slug)) return setError(`The slug "${row.slug}" is reserved.`)
+
+    // New pages, and pages moved to a different group, go to the bottom of where they land.
+    if (isNew || parentId !== parentOf(page)) row.nav_order = nextNavOrder(pages, parentId)
 
     setSaving(true)
-    const query = isNew
-      ? supabase.from('pages').insert({ ...row, nav_order: nextNavOrder })
-      : supabase.from('pages').update(row).eq('id', page.id)
+    const query = isNew ? supabase.from('pages').insert(row) : supabase.from('pages').update(row).eq('id', page.id)
     const { error } = await query
     setSaving(false)
 
     if (error) {
-      // 23505 = unique violation on the slug column.
-      setError(error.code === '23505' ? `Another page already uses the slug "${row.slug}".` : error.message)
+      // 23505 = another item with the same parent already has this slug.
+      setError(
+        error.code === '23505'
+          ? `Another page or group in the same place already uses the slug "${row.slug}".`
+          : error.message,
+      )
       return
     }
     onSaved()
   }
+
+  // The address is the path of the chosen group followed by the slug.
+  const groupPath = values.parent_id ? (pagePaths(pages).get(values.parent_id) ?? '') : ''
+  const isHome = !values.parent_id && values.slug === HOME_SLUG
 
   return (
     <form id={formId} onSubmit={handleSubmit}>
@@ -137,11 +151,13 @@ function PageFormFields({ formId, titleRef, page, nextNavOrder, setSaving, onSav
             onBlur={() => set('slug', slugify(values.slug))}
           />
           <Field.HelperText>
-            {values.slug === HOME_SLUG
+            {isHome
               ? 'This is the home page, shown at /'
-              : `The page address will be /${slugify(values.slug)}. Use "${HOME_SLUG}" for the home page.`}
+              : `The page address will be ${groupPath}/${slugify(values.slug)}`}
           </Field.HelperText>
         </Field.Root>
+
+        <ParentGroupSelect pages={pages} value={values.parent_id} onChange={(id) => set('parent_id', id)} />
 
         <Switch.Root checked={values.published} onCheckedChange={(e) => set('published', e.checked)}>
           <Switch.HiddenInput />

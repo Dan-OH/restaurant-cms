@@ -1,40 +1,23 @@
-import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { supabase } from '../lib/supabase.js'
+import { useEffect } from 'react'
+import { useLocation, useOutletContext } from 'react-router-dom'
 import { HOME_SLUG, SITE_NAME } from '../lib/site.js'
 
 export default function SitePage() {
   const { pathname } = useLocation()
-  const slug = pathname.replace(/^\/+|\/+$/g, '') || HOME_SLUG
+  // Every published page and group, and their addresses, loaded once by SiteLayout.
+  const { rows, paths } = useOutletContext()
 
-  // { slug, page } so a result is never shown against a different URL.
-  const [result, setResult] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    supabase
-      .from('pages')
-      .select('id, title, slug')
-      .eq('slug', slug)
-      .eq('published', true)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error) console.error('Could not load page', error)
-        if (!cancelled) setResult({ slug, page: data ?? null })
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [slug])
-
-  const loaded = result?.slug === slug
-  const page = loaded ? result.page : null
+  // "/menus/lunch/" and "/menus/lunch" are the same page.
+  const path = pathname.replace(/\/+$/, '') || '/'
+  // Only pages have an address of their own; a group's path on its own is not a page.
+  const page = rows?.find((row) => row.kind !== 'group' && paths.get(row.id) === path) ?? null
 
   useEffect(() => {
-    document.title = page && page.slug !== HOME_SLUG ? `${page.title} | ${SITE_NAME}` : SITE_NAME
+    const isHome = page?.slug === HOME_SLUG && page.parent_id == null
+    document.title = page && !isHome ? `${page.title} | ${SITE_NAME}` : SITE_NAME
   }, [page])
 
-  if (!loaded) return null
+  if (!rows) return null
 
   if (!page) {
     return (

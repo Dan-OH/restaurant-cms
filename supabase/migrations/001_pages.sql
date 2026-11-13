@@ -1,4 +1,4 @@
--- Run this once in the Supabase dashboard: SQL Editor > New query > Run.
+-- Migration 001: the pages table. Run in the Supabase dashboard: SQL Editor > New query > Run.
 
 create table public.pages (
   id uuid primary key default gen_random_uuid(),

@@ -57,6 +57,103 @@ body {
   border-bottom-color: currentColor;
 }
 
+/* Page groups: a button in the header that opens a dropdown of the pages inside. */
+
+.site-nav-group {
+  position: relative;
+}
+
+.site-nav-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  font: inherit;
+  color: #4b5563;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.site-nav-toggle:hover,
+.site-nav-toggle[aria-expanded='true'] {
+  color: #111827;
+}
+
+.site-nav-toggle.active {
+  color: #111827;
+  border-bottom-color: currentColor;
+}
+
+/* Small down-pointing chevron that flips when the group is open. */
+.site-nav-caret {
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.site-nav-toggle[aria-expanded='true'] .site-nav-caret {
+  margin-top: 3px;
+  transform: rotate(-135deg);
+}
+
+.site-nav-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: -12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  max-width: calc(100vw - 32px);
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.08);
+}
+
+/* The navigation sits at the right of the header, so the last group opens leftwards
+   to stay on screen. */
+.site-nav-group:last-child .site-nav-dropdown {
+  left: auto;
+  right: -12px;
+}
+
+/* Links and group buttons inside a dropdown are full-width rows, not underlined tabs. */
+.site-nav-dropdown a,
+.site-nav-dropdown .site-nav-toggle {
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 0;
+  border-radius: 6px;
+}
+
+.site-nav-dropdown a:hover,
+.site-nav-dropdown .site-nav-toggle:hover {
+  background: #f3f4f6;
+}
+
+.site-nav-dropdown a.active {
+  font-weight: 600;
+  background: #f3f4f6;
+}
+
+.site-nav-subgroup-items {
+  display: flex;
+  flex-direction: column;
+  margin-left: 12px;
+  padding-left: 4px;
+  border-left: 2px solid #e5e7eb;
+}
+
 .site-main {
   padding: 24px;
 }
