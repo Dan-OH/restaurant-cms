@@ -3,6 +3,8 @@ import { Alert, Badge, Box, Button, Center, Flex, Heading, HStack, Spinner, Text
 import { supabase } from '../lib/supabase.js'
 import { pagePath } from '../lib/site.js'
 import DeletePageDialog from './DeletePageDialog.jsx'
+import ExternalLinkButton from './ExternalLinkButton.jsx'
+import FaIcon from './FaIcon.jsx'
 import PageFormDialog from './PageFormDialog.jsx'
 
 // Shared by the header and every row so the columns line up:
@@ -248,7 +250,7 @@ export default function PagesList() {
                         onDragEnd={endDrag}
                         onKeyDown={(event) => handleHandleKeyDown(event, index)}
                       >
-                        <GripIcon />
+                        <FaIcon code="f58e" />
                       </Box>
                       <Text fontWeight="medium" truncate>
                         {page.title}
@@ -262,11 +264,9 @@ export default function PagesList() {
                       <Text color="fg.muted">{page.show_in_nav ? 'Shown' : 'Hidden'}</Text>
                       <HStack justify="flex-end" gap="2">
                         {page.published && (
-                          <Button asChild size="sm" variant="ghost">
-                            <a href={pagePath(page.slug)} target="_blank" rel="noreferrer">
-                              View
-                            </a>
-                          </Button>
+                          <ExternalLinkButton href={pagePath(page.slug)} size="sm" variant="ghost">
+                            View
+                          </ExternalLinkButton>
                         )}
                         <Button size="sm" variant="outline" onClick={() => setDialog({ open: true, page })}>
                           Edit
@@ -316,18 +316,5 @@ export default function PagesList() {
         }}
       />
     </Box>
-  )
-}
-
-function GripIcon() {
-  return (
-    <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true">
-      <circle cx="2" cy="2" r="1.5" />
-      <circle cx="8" cy="2" r="1.5" />
-      <circle cx="2" cy="8" r="1.5" />
-      <circle cx="8" cy="8" r="1.5" />
-      <circle cx="2" cy="14" r="1.5" />
-      <circle cx="8" cy="14" r="1.5" />
-    </svg>
   )
 }

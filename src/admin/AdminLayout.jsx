@@ -1,6 +1,7 @@
 import { Box, Button, Center, Container, Flex, Heading, Spinner, Stack, Text } from '@chakra-ui/react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
+import ExternalLinkButton from './ExternalLinkButton.jsx'
 import { useAuth } from './useAuth.js'
 
 // Shown at the left of the top bar; replace with the product name once there is one.
@@ -61,11 +62,9 @@ export default function AdminLayout() {
         <Heading size="md" px="3" asChild>
           <Link to="/admin">{PRODUCT_NAME}</Link>
         </Heading>
-        <Button asChild variant="outline" size="sm">
-          <a href="/" target="_blank" rel="noreferrer">
-            View site
-          </a>
-        </Button>
+        <ExternalLinkButton href="/" variant="outline" size="sm">
+          View site
+        </ExternalLinkButton>
       </Flex>
 
       {/* Sidebar on the left from the md breakpoint up; stacked above the content on small screens. */}
