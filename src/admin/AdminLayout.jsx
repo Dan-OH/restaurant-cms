@@ -3,6 +3,12 @@ import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from './useAuth.js'
 
+// Shown at the left of the top bar; replace with the product name once there is one.
+const PRODUCT_NAME = 'Site admin'
+
+// A CSS length, because the sticky sidebar offsets itself by it.
+const TOP_BAR_HEIGHT = '3.5rem'
+
 // Sidebar links. To add a dashboard section, add an entry here and a matching <Route> in AdminApp.jsx.
 const NAV_ITEMS = [{ label: 'Pages', to: '/admin/pages' }]
 
@@ -37,52 +43,69 @@ export default function AdminLayout() {
   }
 
   return (
-    // Sidebar on the left from the md breakpoint up; stacked above the content on small screens.
-    <Flex minH="100vh" bg="bg.subtle" direction={{ base: 'column', md: 'row' }}>
+    <Flex minH="100vh" bg="bg.subtle" direction="column">
       <Flex
-        as="aside"
-        direction="column"
+        as="header"
+        align="center"
+        justify="space-between"
         gap="4"
         flexShrink="0"
-        w={{ base: 'full', md: '60' }}
-        h={{ md: '100vh' }}
-        position={{ md: 'sticky' }}
+        h={TOP_BAR_HEIGHT}
+        px="4"
+        position="sticky"
         top="0"
-        p="4"
+        zIndex="docked"
         bg="bg"
-        borderRightWidth={{ md: '1px' }}
-        borderBottomWidth={{ base: '1px', md: '0' }}
+        borderBottomWidth="1px"
       >
-        <Heading size="md" px="3" py="1" asChild>
-          <Link to="/admin">Site admin</Link>
+        <Heading size="md" px="3" asChild>
+          <Link to="/admin">{PRODUCT_NAME}</Link>
         </Heading>
-
-        <Flex as="nav" aria-label="Admin" direction={{ base: 'row', md: 'column' }} wrap="wrap" gap="1" flex="1">
-          {NAV_ITEMS.map((item) => (
-            <SidebarLink key={item.to} item={item} />
-          ))}
-        </Flex>
-
-        <Stack gap="1" direction={{ base: 'row', md: 'column' }} align={{ base: 'center', md: 'stretch' }}>
-          <Text fontSize="xs" color="fg.muted" px="3" truncate flex={{ base: '1', md: 'none' }}>
-            {session.user.email}
-          </Text>
-          <Button asChild variant="ghost" size="sm" justifyContent="flex-start">
-            <a href="/" target="_blank" rel="noreferrer">
-              View site
-            </a>
-          </Button>
-          <Button variant="ghost" size="sm" justifyContent="flex-start" onClick={() => supabase.auth.signOut()}>
-            Log out
-          </Button>
-        </Stack>
+        <Button asChild variant="outline" size="sm">
+          <a href="/" target="_blank" rel="noreferrer">
+            View site
+          </a>
+        </Button>
       </Flex>
 
-      <Box as="main" flex="1" minW="0">
-        <Container maxW="5xl" py="8">
-          <Outlet />
-        </Container>
-      </Box>
+      {/* Sidebar on the left from the md breakpoint up; stacked above the content on small screens. */}
+      <Flex flex="1" direction={{ base: 'column', md: 'row' }}>
+        <Flex
+          as="aside"
+          direction="column"
+          gap="4"
+          flexShrink="0"
+          w={{ base: 'full', md: '60' }}
+          h={{ md: `calc(100vh - ${TOP_BAR_HEIGHT})` }}
+          position={{ md: 'sticky' }}
+          top={TOP_BAR_HEIGHT}
+          p="4"
+          bg="bg"
+          borderRightWidth={{ md: '1px' }}
+          borderBottomWidth={{ base: '1px', md: '0' }}
+        >
+          <Flex as="nav" aria-label="Admin" direction={{ base: 'row', md: 'column' }} wrap="wrap" gap="1" flex="1">
+            {NAV_ITEMS.map((item) => (
+              <SidebarLink key={item.to} item={item} />
+            ))}
+          </Flex>
+
+          <Stack gap="1" direction={{ base: 'row', md: 'column' }} align={{ base: 'center', md: 'stretch' }}>
+            <Text fontSize="xs" color="fg.muted" px="3" truncate flex={{ base: '1', md: 'none' }}>
+              {session.user.email}
+            </Text>
+            <Button variant="ghost" size="sm" justifyContent="flex-start" onClick={() => supabase.auth.signOut()}>
+              Log out
+            </Button>
+          </Stack>
+        </Flex>
+
+        <Box as="main" flex="1" minW="0">
+          <Container maxW="5xl" py="8">
+            <Outlet />
+          </Container>
+        </Box>
+      </Flex>
     </Flex>
   )
 }
