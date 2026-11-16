@@ -4,6 +4,7 @@ import { getSectionType } from '../sections/index.js'
 import { EMBED_CLASS, embeddedSystem } from './embeddedSystem.js'
 import FaIcon from './FaIcon.jsx'
 import { PortalContainerContext } from './portalContainer.js'
+import RemoveSectionDialog from './RemoveSectionDialog.jsx'
 import SectionLibraryDialog from './SectionLibraryDialog.jsx'
 
 // Draws a page's sections for editing, in place of the normal page content. Each section
@@ -22,6 +23,9 @@ import SectionLibraryDialog from './SectionLibraryDialog.jsx'
 // on the live site.
 export default function ContentEditor({ sections, onChange }) {
   const [libraryOpen, setLibraryOpen] = useState(false)
+  // The section waiting for the user to confirm its removal. `label` is kept while the
+  // dialog closes so its text doesn't change during the exit animation.
+  const [removal, setRemoval] = useState({ open: false, sectionId: null, label: '' })
   // The element dialogs are rendered into. See portalContainer.js.
   const [portalContainer, setPortalContainer] = useState(null)
   // Drag state: the index being dragged and the gap it would be dropped into.
@@ -215,7 +219,7 @@ export default function ContentEditor({ sections, onChange }) {
                     colorPalette="red"
                     aria-label={`Remove ${label} section`}
                     title="Remove section"
-                    onClick={() => removeSection(section.id)}
+                    onClick={() => setRemoval({ open: true, sectionId: section.id, label })}
                   >
                     {/* f2ed = trash can */}
                     <FaIcon code="f2ed" />
@@ -252,6 +256,16 @@ export default function ContentEditor({ sections, onChange }) {
 
         {/* Dialogs render in here. See portalContainer.js. */}
         <div className={EMBED_CLASS} ref={setPortalContainer} />
+
+        <RemoveSectionDialog
+          open={removal.open}
+          label={removal.label}
+          onClose={() => setRemoval((current) => ({ ...current, open: false }))}
+          onConfirm={() => {
+            removeSection(removal.sectionId)
+            setRemoval((current) => ({ ...current, open: false }))
+          }}
+        />
 
         <SectionLibraryDialog open={libraryOpen} onClose={() => setLibraryOpen(false)} onPick={addSection} />
       </PortalContainerContext.Provider>
