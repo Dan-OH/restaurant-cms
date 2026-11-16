@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Badge, Box, Button, HStack, Text, Tooltip } from '@chakra-ui/react'
+import { Link } from 'react-router-dom'
 import AdminPortal from './AdminPortal.jsx'
 import { ROOT } from '../lib/pageTree.js'
 import ExternalLinkButton from './ExternalLinkButton.jsx'
@@ -8,7 +9,7 @@ import FaIcon from './FaIcon.jsx'
 // Shared by the column headings and every row so the columns line up:
 // handle | title | URL | status | navigation | actions
 // The right-hand columns have fixed widths, so they stay aligned however deeply a row is nested.
-export const COLUMNS = '1.5rem minmax(8rem, 1.5fr) minmax(6rem, 1fr) 6rem 6rem 17rem'
+export const COLUMNS = '1.5rem minmax(8rem, 1.5fr) minmax(6rem, 1fr) 6rem 6rem 23rem'
 
 // Space between rows, and the drop line that sits centred in it.
 const ROW_GAP = '0.5rem'
@@ -143,6 +144,14 @@ function PageCells({ page, ctx }) {
             View
           </ExternalLinkButton>
         )}
+        <Button asChild size="sm" variant="outline">
+          {/* Content is edited on the page itself: this opens it with the editor on. */}
+          <Link to={`${ctx.paths.get(page.id)}?edit=1`}>
+            Content
+            {/* f15c = file with lines */}
+            <FaIcon code="f15c" />
+          </Link>
+        </Button>
         <Button size="sm" variant="outline" onClick={() => ctx.onEditPage(page)}>
           Edit
           {/* f303 = pencil */}

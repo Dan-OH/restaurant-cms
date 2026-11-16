@@ -1,0 +1,44 @@
+/* See EditableText.jsx. */
+
+.editable-text {
+  /* Keep line breaks and blank lines as typed. */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.editable-text-editing {
+  display: grid;
+}
+
+/* The hidden copy and the text area share one grid cell, so they are always the same size. */
+.editable-text-editing > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.editable-text-editing > div {
+  visibility: hidden;
+}
+
+/* Strip everything that makes a text area look like a form field, so it reads as page text. */
+.editable-text-editing > textarea {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  background: none;
+  border: 0;
+  outline: 0;
+  resize: none;
+}
+
+.editable-text-editing > textarea::placeholder {
+  color: inherit;
+  opacity: 0.4;
+}

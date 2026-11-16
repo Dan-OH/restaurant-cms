@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth.js'
 import { supabase } from '../lib/supabase.js'
 import { ROOT, childrenByParent, pagePaths } from '../lib/pageTree.js'
 import { LOGO_SRC, SITE_NAME } from '../lib/site.js'
 import SiteAdminBar from './SiteAdminBar.jsx'
+import { usePageSections } from './usePageSections.js'
 import './site.css'
 
 // Turns the flat rows into nested nav nodes (each with its `path`), leaving out drafts, pages
@@ -76,18 +77,45 @@ export default function SiteLayout() {
     [rows, paths, path],
   )
 
+  // Content editing is on when the address ends in "?edit" (and an editor is looking at a
+  // real page), so it survives a reload and can be linked to from the dashboard.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const wantsEditing = isEditor && Boolean(page) && searchParams.has('edit')
+  const content = usePageSections(page?.id, wantsEditing)
+
+  function confirmDiscard() {
+    return !content.dirty || window.confirm('You have unsaved changes. Leave without saving?')
+  }
+
+  const contentEditor = {
+    ...content,
+    start: () => setSearchParams({ edit: '1' }),
+    stop: () => {
+      if (confirmDiscard()) setSearchParams({})
+    },
+  }
+
+  // Following a link while there are unsaved changes would silently lose them, so ask first.
+  function handleClickCapture(event) {
+    if (!content.dirty || !event.target.closest?.('a[href]')) return
+    if (!confirmDiscard()) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  }
+
   // Called after the current page is edited from the bar. Its address may have changed
   // (new slug or group), in which case we follow it there.
   async function handlePageSaved(saved) {
     const fresh = await load()
     setRows(fresh)
     const newPath = pagePaths(fresh).get(saved.id)
-    if (newPath && newPath !== path) navigate(newPath, { replace: true })
+    if (newPath && newPath !== path) navigate({ pathname: newPath, search: window.location.search }, { replace: true })
   }
 
   return (
-    <div className="site">
-      <SiteAdminBar page={page} pages={rows ?? []} onPageSaved={handlePageSaved} />
+    <div className="site" onClickCapture={handleClickCapture}>
+      <SiteAdminBar page={page} pages={rows ?? []} onPageSaved={handlePageSaved} content={contentEditor} />
       <header className="site-header">
         <Link to="/" className="site-logo">
           <img src={LOGO_SRC} alt="" width="40" height="40" />
@@ -100,7 +128,15 @@ export default function SiteLayout() {
         </nav>
       </header>
       <main className="site-main">
-        <Outlet context={{ loading: !rows, page }} />
+        <Outlet
+          context={{
+            loading: !rows,
+            page,
+            sections: content.sections,
+            editing: content.editing,
+            setSections: content.setSections,
+          }}
+        />
       </main>
     </div>
   )

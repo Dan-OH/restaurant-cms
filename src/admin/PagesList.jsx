@@ -233,7 +233,7 @@ export default function PagesList() {
       {pages?.length > 0 && (
         <>
           <Box overflowX="auto">
-            <Box minW="2xl">
+            <Box minW="4xl">
               <Box
                 display="grid"
                 gridTemplateColumns={COLUMNS}

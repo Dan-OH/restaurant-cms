@@ -1,5 +1,5 @@
-import { Box, Button, Center, Container, Flex, Heading, Spinner, Stack, Text } from '@chakra-ui/react'
-import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Box, Button, Container, Flex, Heading, Stack, Text } from '@chakra-ui/react'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import ExternalLinkButton from './ExternalLinkButton.jsx'
 import FaIcon from './FaIcon.jsx'
@@ -27,22 +27,10 @@ function SidebarLink({ item }) {
   )
 }
 
-// Shell for every logged-in CMS screen; redirects to the login page otherwise.
+// The dashboard shell: top bar, sidebar and the current section. Only rendered for
+// logged-in users (see RequireAuth in AdminApp.jsx).
 export default function AdminLayout() {
-  const { session, loading } = useAuth()
-  const location = useLocation()
-
-  if (loading) {
-    return (
-      <Center minH="100vh">
-        <Spinner />
-      </Center>
-    )
-  }
-
-  if (!session) {
-    return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />
-  }
+  const { session } = useAuth()
 
   return (
     <Flex minH="100vh" bg="bg.subtle" direction="column">
