@@ -20,6 +20,7 @@
     "@tiptap/starter-kit": "^3.34.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-easy-crop": "^6.2.5",
     "react-router-dom": "^7.18.5"
   },
   "devDependencies": {

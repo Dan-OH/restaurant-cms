@@ -6,11 +6,13 @@ import FaIcon from './FaIcon.jsx'
 import { PortalContainerContext } from './portalContainer.js'
 import RemoveSectionDialog from './RemoveSectionDialog.jsx'
 import SectionLibraryDialog from './SectionLibraryDialog.jsx'
+import SectionSettingsDialog from './SectionSettingsDialog.jsx'
 
 // Draws a page's sections for editing, in place of the normal page content. Each section
 // is drawn by its own design, exactly as visitors see it, and is typed into directly. On
 // top of that this adds the things that only exist while editing: an outline and a small
-// toolbar per section (drag to reorder, remove), and the "Add section" button.
+// toolbar per section (drag to reorder, settings where the design has any, remove), and
+// the "Add section" button.
 //
 // Loaded on demand by src/site/SitePage.jsx when an editor turns editing on, so visitors
 // never download it or Chakra. It holds no data of its own:
@@ -23,6 +25,8 @@ import SectionLibraryDialog from './SectionLibraryDialog.jsx'
 // on the live site.
 export default function ContentEditor({ sections, onChange }) {
   const [libraryOpen, setLibraryOpen] = useState(false)
+  // Whose settings dialog is open. The id is kept while the dialog closes.
+  const [settings, setSettings] = useState({ open: false, sectionId: null })
   // The section waiting for the user to confirm its removal. `label` is kept while the
   // dialog closes so its text doesn't change during the exit animation.
   const [removal, setRemoval] = useState({ open: false, sectionId: null, label: '' })
@@ -183,6 +187,7 @@ export default function ContentEditor({ sections, onChange }) {
                   pl="1"
                   bg="bg"
                   borderWidth="1px"
+                  borderColor="border"
                   borderRadius="md"
                   shadow="xs"
                 >
@@ -213,6 +218,18 @@ export default function ContentEditor({ sections, onChange }) {
                   <Text fontSize="xs" fontWeight="medium" color="fg.muted">
                     {label}
                   </Text>
+                  {definition?.Settings && (
+                    <IconButton
+                      size="2xs"
+                      variant="ghost"
+                      aria-label={`${label} section settings`}
+                      title="Section settings"
+                      onClick={() => setSettings({ open: true, sectionId: section.id })}
+                    >
+                      {/* f013 = gear */}
+                      <FaIcon code="f013" />
+                    </IconButton>
+                  )}
                   <IconButton
                     size="2xs"
                     variant="ghost"
@@ -265,6 +282,13 @@ export default function ContentEditor({ sections, onChange }) {
             removeSection(removal.sectionId)
             setRemoval((current) => ({ ...current, open: false }))
           }}
+        />
+
+        <SectionSettingsDialog
+          open={settings.open}
+          section={sections.find((section) => section.id === settings.sectionId) ?? null}
+          onChange={(name, value) => setField(settings.sectionId, name, value)}
+          onClose={() => setSettings((current) => ({ ...current, open: false }))}
         />
 
         <SectionLibraryDialog open={libraryOpen} onClose={() => setLibraryOpen(false)} onPick={addSection} />

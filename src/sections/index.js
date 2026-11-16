@@ -17,7 +17,13 @@
 //                               (formatted text) or <EditableText> (plain text) to let
 //                               editors type into the section where it appears.
 //                   Plain HTML and CSS only: it must not use Chakra, because visitors
-//                   never load it.
+//                   never load it. Editing-only parts that need Chakra (see image/) go
+//                   in a separate file loaded with lazy(), and only when onChange is given.
+//   Settings        Optional. Options that can't be edited in place. When present, the
+//                   section gets a settings button while editing, which opens a dialog
+//                   showing this component. It is admin UI, so it may use Chakra, but it
+//                   must be loaded with lazy(). It receives { content, onChange, onClose }
+//                   and draws the dialog's body and footer.
 const modules = import.meta.glob('./*/index.js', { eager: true })
 
 export const SECTION_TYPES = Object.values(modules)
