@@ -1,6 +1,19 @@
+/* The width and the columns come from TextSection.jsx, which sets them from the section's
+   settings. */
 .section-text {
-  max-width: 44rem;
+  display: grid;
+  grid-template-columns: var(--section-text-columns, minmax(0, 1fr));
+  gap: 2.5rem;
+  max-width: var(--section-text-width, 44rem);
   margin: 0 auto;
   padding: 24px 0;
   line-height: 1.7;
+}
+
+/* On narrow screens the columns stack, in order. */
+@media (max-width: 48rem) {
+  .section-text {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
 }

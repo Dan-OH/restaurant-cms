@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Dialog, Field, Input, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { Alert, Box, Button, Dialog, Field, Input, Stack, Text } from '@chakra-ui/react'
 import FaIcon from '../../admin/FaIcon.jsx'
 import ImageCropper from '../../admin/ImageCropper.jsx'
+import OptionCards from '../../admin/OptionCards.jsx'
+import { optionColor } from '../../admin/optionColor.js'
 import { cropImage, downloadOriginal, uploadCropped } from '../../lib/images.js'
 import { IMAGE_PRESETS, getImagePreset } from '../imagePresets.js'
 
@@ -112,53 +114,26 @@ export default function ImageSettings({ content, onChange, onClose, extra }) {
         <Stack gap="5">
           {errorAlert}
 
-          <Field.Root>
-            <Field.Label>Shape</Field.Label>
-            <SimpleGrid columns={{ base: 2, sm: 3 }} gap="2" w="full" role="radiogroup" aria-label="Shape">
-              {IMAGE_PRESETS.map((option) => {
-                const selected = option.id === presetId
-                return (
-                  <Box
-                    as="button"
-                    type="button"
-                    key={option.id}
-                    role="radio"
-                    aria-checked={selected}
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="center"
-                    gap="2"
-                    p="3"
-                    borderWidth="2px"
-                    borderColor={selected ? 'blue.solid' : 'border'}
-                    borderRadius="lg"
-                    cursor="pointer"
-                    _hover={{ bg: 'bg.muted' }}
-                    onClick={() => setPresetId(option.id)}
-                  >
-                    {/* A small box in the shape itself. */}
-                    <Box display="flex" alignItems="center" justifyContent="center" h="10">
-                      <Box
-                        bg={selected ? 'blue.solid' : 'border.emphasized'}
-                        borderRadius="xs"
-                        aspectRatio={option.width / option.height}
-                        {...(option.width >= option.height ? { w: '12' } : { h: '10' })}
-                      />
-                    </Box>
-                    <Text fontSize="sm" fontWeight="medium" lineHeight="short">
-                      {option.label}
-                      <Text as="span" display="block" fontSize="xs" fontWeight="normal" color="fg.muted">
-                        {option.ratio} · up to {option.width} × {option.height}
-                      </Text>
-                    </Text>
-                  </Box>
-                )
-              })}
-            </SimpleGrid>
-            {needsCrop && (
-              <Field.HelperText>You’ll be asked to crop the image again for the new shape.</Field.HelperText>
-            )}
-          </Field.Root>
+          <OptionCards
+            label="Shape"
+            value={presetId}
+            onChange={setPresetId}
+            options={IMAGE_PRESETS.map((option) => ({
+              id: option.id,
+              label: option.label,
+              hint: `${option.ratio} · up to ${option.width} × ${option.height}`,
+              // A small box in the shape itself.
+              preview: (selected) => (
+                <Box
+                  bg={optionColor(selected)}
+                  borderRadius="xs"
+                  aspectRatio={option.width / option.height}
+                  {...(option.width >= option.height ? { w: '12' } : { h: '10' })}
+                />
+              ),
+            }))}
+            helperText={needsCrop ? 'You’ll be asked to crop the image again for the new shape.' : undefined}
+          />
 
           <Field.Root>
             <Field.Label>Description</Field.Label>
