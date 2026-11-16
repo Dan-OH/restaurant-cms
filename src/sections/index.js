@@ -13,9 +13,9 @@
 //                   page editor alike. It receives:
 //                     content   The section's saved values.
 //                     onChange  Only while the page is being edited: onChange(name, value)
-//                               stores value as content[name]. Hand it to <EditableText>
-//                               (see EditableText.jsx) to let editors type into the section
-//                               where it appears.
+//                               stores value as content[name]. Hand it to <RichText>
+//                               (formatted text) or <EditableText> (plain text) to let
+//                               editors type into the section where it appears.
 //                   Plain HTML and CSS only: it must not use Chakra, because visitors
 //                   never load it.
 const modules = import.meta.glob('./*/index.js', { eager: true })
