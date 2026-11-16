@@ -14,10 +14,11 @@
 //                     content   The section's saved values.
 //                     onChange  Only while the page is being edited: onChange(name, value)
 //                               stores value as content[name]. Hand it to <RichText>
-//                               (formatted text) or <EditableText> (plain text) to let
-//                               editors type into the section where it appears.
+//                               (formatted text), <EditableText> (plain text) or
+//                               <EditableImage> (an uploaded image) to let editors fill
+//                               the section in where it appears.
 //                   Plain HTML and CSS only: it must not use Chakra, because visitors
-//                   never load it. Editing-only parts that need Chakra (see image/) go
+//                   never load it. Editing-only parts that need Chakra (see EditableImage.jsx) go
 //                   in a separate file loaded with lazy(), and only when onChange is given.
 //   Settings        Optional. Options that can't be edited in place. When present, the
 //                   section gets a settings button while editing, which opens a dialog

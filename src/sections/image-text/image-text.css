@@ -1,0 +1,30 @@
+.section-image-text {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 24px 0;
+  line-height: 1.7;
+}
+
+/* The image comes first in the page; "right" swaps the two visually. */
+.section-image-text-right {
+  flex-direction: row-reverse;
+}
+
+.section-image-text-image,
+.section-image-text-text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Stacked on narrow screens, image on top whichever side it is on. */
+@media (max-width: 48rem) {
+  .section-image-text,
+  .section-image-text-right {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+  }
+}

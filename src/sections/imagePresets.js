@@ -1,4 +1,4 @@
-// The shapes an image section can have. An uploaded image is cropped to the chosen shape,
+// The shapes an image in a section can have (see EditableImage.jsx). An uploaded image is cropped to the chosen shape,
 // and saved no larger than the width and height given here (in pixels).
 export const IMAGE_PRESETS = [
   { id: 'wide', label: 'Wide', ratio: '16:9', width: 1600, height: 900 },

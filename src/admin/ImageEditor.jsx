@@ -1,15 +1,16 @@
 import { useRef, useState } from 'react'
 import { Box, Button, HStack, Text } from '@chakra-ui/react'
-import { EMBED_CLASS } from '../../admin/embeddedSystem.js'
-import FaIcon from '../../admin/FaIcon.jsx'
-import ImageCropDialog from '../../admin/ImageCropDialog.jsx'
-import { MAX_UPLOAD_BYTES, cropImage, downloadOriginal, uploadCropped, uploadOriginal } from '../../lib/images.js'
-import { getImagePreset } from './presets.js'
+import { MAX_UPLOAD_BYTES, cropImage, downloadOriginal, uploadCropped, uploadOriginal } from '../lib/images.js'
+import { getImagePreset } from '../sections/imagePresets.js'
+import { EMBED_CLASS } from './embeddedSystem.js'
+import FaIcon from './FaIcon.jsx'
+import ImageCropDialog from './ImageCropDialog.jsx'
 
-// The image section while it is being edited: the image as visitors see it (`image`, drawn
-// by ImageSection.jsx), plus buttons to upload, replace and re-crop. Choosing a file always
-// goes through the crop dialog. Admin UI, loaded on demand by ImageSection.jsx.
-export default function ImageSectionEditor({ content, onChange, image }) {
+// An image while its section is being edited: the image as visitors see it (`image`, drawn
+// by src/sections/EditableImage.jsx), plus buttons to upload, replace and re-crop. Choosing
+// a file always goes through the crop dialog. Admin UI, loaded on demand by EditableImage.jsx,
+// which also documents `content` and `onChange`.
+export default function ImageEditor({ content, onChange, image }) {
   const preset = getImagePreset(content.preset)
   const fileInput = useRef(null)
   // What is open in the crop dialog: { blob, file }. `file` is set for a newly chosen
@@ -67,7 +68,7 @@ export default function ImageSectionEditor({ content, onChange, image }) {
         <>
           {image}
           {/* Floats over the bottom-left corner of the image. */}
-          <Box className={EMBED_CLASS} position="absolute" left="2" bottom="8">
+          <Box className={EMBED_CLASS} position="absolute" left="2" bottom="2">
             <HStack gap="2">
               <Button size="xs" variant="outline" bg="bg" shadow="xs" onClick={() => fileInput.current.click()}>
                 Replace image

@@ -3,17 +3,24 @@ import { Alert, Box, Button, Dialog, Field, Input, SimpleGrid, Stack, Text } fro
 import FaIcon from '../../admin/FaIcon.jsx'
 import ImageCropper from '../../admin/ImageCropper.jsx'
 import { cropImage, downloadOriginal, uploadCropped } from '../../lib/images.js'
-import { IMAGE_PRESETS, getImagePreset } from './presets.js'
+import { IMAGE_PRESETS, getImagePreset } from '../imagePresets.js'
 
-// The image section's settings, shown inside the settings dialog (see src/sections/index.js):
-// the image's shape and its description.
+// Settings for a section that has an image, shown inside the settings dialog (see
+// src/sections/index.js): the image's shape and its description.
+//
+// Other section designs with an image reuse this and add options of their own through
+// `extra` (see image-text/ImageTextSettings.jsx):
+//   extra.initial   Starting values, e.g. { imageSide: 'left' }.
+//   extra.render    (values, setValue) => the extra fields. setValue(name, value) changes one.
+// On "Apply", each extra value is stored as content[name], along with the image settings.
 //
 // The image on the site has to match the chosen shape, so when the shape changes and an
 // image has already been uploaded, "Apply" moves to a second step that asks the user to
 // crop the original again. The shape only changes once that crop is done.
-export default function ImageSettings({ content, onChange, onClose }) {
+export default function ImageSettings({ content, onChange, onClose, extra }) {
   const [presetId, setPresetId] = useState(getImagePreset(content.preset).id)
   const [alt, setAlt] = useState(content.alt ?? '')
+  const [extraValues, setExtraValues] = useState(extra?.initial ?? {})
   // Set during the second step: the original image file, fetched from storage.
   const [original, setOriginal] = useState(null)
   const [area, setArea] = useState(null)
@@ -24,10 +31,16 @@ export default function ImageSettings({ content, onChange, onClose }) {
   const shapeChanged = presetId !== getImagePreset(content.preset).id
   const needsCrop = shapeChanged && Boolean(content.original)
 
+  // Everything except the cropped image itself, which only the crop step produces.
+  function applyValues() {
+    onChange('alt', alt.trim())
+    onChange('preset', presetId)
+    for (const [name, value] of Object.entries(extraValues)) onChange(name, value)
+  }
+
   async function apply() {
     if (!needsCrop) {
-      onChange('alt', alt.trim())
-      onChange('preset', presetId)
+      applyValues()
       return onClose()
     }
     setError('')
@@ -45,8 +58,7 @@ export default function ImageSettings({ content, onChange, onClose }) {
     setBusy(true)
     try {
       const cropped = await uploadCropped(content.original, await cropImage(original, area, preset))
-      onChange('alt', alt.trim())
-      onChange('preset', presetId)
+      applyValues()
       onChange('cropped', cropped)
       onClose()
     } catch (problem) {
@@ -155,6 +167,8 @@ export default function ImageSettings({ content, onChange, onClose }) {
               Describes the image for people using screen readers and for search engines. Not shown on the page.
             </Field.HelperText>
           </Field.Root>
+
+          {extra?.render(extraValues, (name, value) => setExtraValues((current) => ({ ...current, [name]: value })))}
         </Stack>
       </Dialog.Body>
       <Dialog.Footer>
