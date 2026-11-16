@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './auth/AuthProvider.jsx'
 import { supabase } from './lib/supabase.js'
 import SiteLayout from './site/SiteLayout.jsx'
 import SitePage from './site/SitePage.jsx'
@@ -21,22 +22,24 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/admin/*"
-          element={
-            <Suspense fallback={null}>
-              <AdminApp />
-            </Suspense>
-          }
-        />
-        <Route element={<SiteLayout />}>
-          <Route index element={<SitePage />} />
-          <Route path=":slug" element={<SitePage />} />
-          <Route path="*" element={<SitePage />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/admin/*"
+            element={
+              <Suspense fallback={null}>
+                <AdminApp />
+              </Suspense>
+            }
+          />
+          <Route element={<SiteLayout />}>
+            <Route index element={<SitePage />} />
+            <Route path=":slug" element={<SitePage />} />
+            <Route path="*" element={<SitePage />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }

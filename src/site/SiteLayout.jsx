@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { ROOT, childrenByParent, pagePaths } from '../lib/pageTree.js'
 import { LOGO_SRC, SITE_NAME } from '../lib/site.js'
+import SiteAdminBar from './SiteAdminBar.jsx'
 import './site.css'
 
 // Turns the flat rows into nested nav nodes (each with its `path`), leaving out pages that
@@ -54,6 +55,7 @@ export default function SiteLayout() {
 
   return (
     <div className="site">
+      <SiteAdminBar />
       <header className="site-header">
         <Link to="/" className="site-logo">
           <img src={LOGO_SRC} alt="" width="40" height="40" />

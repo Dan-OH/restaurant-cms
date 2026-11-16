@@ -11,6 +11,13 @@ body {
   background: #fff;
 }
 
+/* Holds the editor bar's space while it loads (see SiteAdminBar.jsx). The height and
+   colour match the real bar in src/admin/EditorBar.jsx. */
+.site-admin-bar-placeholder {
+  height: 2.5rem;
+  background: #18181b;
+}
+
 .site-header {
   display: flex;
   flex-wrap: wrap;

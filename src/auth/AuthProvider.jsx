@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { AuthContext } from './useAuth.js'
 
+// Wraps the whole app (see App.jsx) so both the admin and the public site know who is logged in.
 export function AuthProvider({ children }) {
   const [state, setState] = useState({ session: null, loading: true })
 

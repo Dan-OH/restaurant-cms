@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Alert, Box, Button, Center, Field, Heading, Input, Stack } from '@chakra-ui/react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
-import { useAuth } from './useAuth.js'
+import { useAuth } from '../auth/useAuth.js'
 
 export default function LoginPage() {
   const { session, loading } = useAuth()

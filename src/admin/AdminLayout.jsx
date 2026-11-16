@@ -3,7 +3,7 @@ import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import ExternalLinkButton from './ExternalLinkButton.jsx'
 import FaIcon from './FaIcon.jsx'
-import { useAuth } from './useAuth.js'
+import { useAuth } from '../auth/useAuth.js'
 
 // Shown at the left of the top bar; replace with the product name once there is one.
 const PRODUCT_NAME = 'Site admin'
