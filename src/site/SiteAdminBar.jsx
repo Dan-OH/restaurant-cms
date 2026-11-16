@@ -6,7 +6,8 @@ import { useAuth } from '../auth/useAuth.js'
 const EditorBar = lazy(() => import('../admin/EditorBar.jsx'))
 
 // Bar across the top of the public site, shown only to logged-in editors.
-export default function SiteAdminBar() {
+// Its props describe the page being viewed and are passed straight through to the bar.
+export default function SiteAdminBar(props) {
   const { session } = useAuth()
   if (!session) return null
 
@@ -14,7 +15,7 @@ export default function SiteAdminBar() {
     // The placeholder is the same height and colour as the bar, so the page doesn't jump
     // when the bar arrives.
     <Suspense fallback={<div className="site-admin-bar-placeholder" />}>
-      <EditorBar />
+      <EditorBar {...props} />
     </Suspense>
   )
 }

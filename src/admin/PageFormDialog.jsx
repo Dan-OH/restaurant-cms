@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react'
-import { Alert, Button, CloseButton, Dialog, Field, Input, Portal, Stack, Switch } from '@chakra-ui/react'
+import { Alert, Button, CloseButton, Dialog, Field, Input, Stack, Switch } from '@chakra-ui/react'
+import AdminPortal from './AdminPortal.jsx'
 import { supabase } from '../lib/supabase.js'
 import { nextNavOrder, pagePaths, parentOf } from '../lib/pageTree.js'
 import { HOME_SLUG, RESERVED_SLUGS, slugify } from '../lib/site.js'
@@ -25,7 +26,7 @@ export default function PageFormDialog({ open, page, pages, onClose, onSaved }) 
       lazyMount
       unmountOnExit
     >
-      <Portal>
+      <AdminPortal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
           <Dialog.Content>
@@ -55,7 +56,7 @@ export default function PageFormDialog({ open, page, pages, onClose, onSaved }) 
             </Dialog.CloseTrigger>
           </Dialog.Content>
         </Dialog.Positioner>
-      </Portal>
+      </AdminPortal>
     </Dialog.Root>
   )
 }

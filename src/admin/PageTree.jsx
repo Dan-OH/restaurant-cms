@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Badge, Box, Button, HStack, Portal, Text, Tooltip } from '@chakra-ui/react'
+import { Badge, Box, Button, HStack, Text, Tooltip } from '@chakra-ui/react'
+import AdminPortal from './AdminPortal.jsx'
 import { ROOT } from '../lib/pageTree.js'
 import ExternalLinkButton from './ExternalLinkButton.jsx'
 import FaIcon from './FaIcon.jsx'
@@ -250,7 +251,7 @@ function UrlText({ url, copyable = false }) {
       positioning={{ placement: 'top-start' }}
     >
       <Tooltip.Trigger asChild>{text}</Tooltip.Trigger>
-      <Portal>
+      <AdminPortal>
         <Tooltip.Positioner>
           <Tooltip.Content maxW="lg">
             <Text wordBreak="break-all">{url}</Text>
@@ -261,7 +262,7 @@ function UrlText({ url, copyable = false }) {
             )}
           </Tooltip.Content>
         </Tooltip.Positioner>
-      </Portal>
+      </AdminPortal>
     </Tooltip.Root>
   )
 }

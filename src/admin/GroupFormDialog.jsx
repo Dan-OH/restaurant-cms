@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react'
-import { Alert, Button, CloseButton, Dialog, Field, Input, Portal, Stack } from '@chakra-ui/react'
+import { Alert, Button, CloseButton, Dialog, Field, Input, Stack } from '@chakra-ui/react'
+import AdminPortal from './AdminPortal.jsx'
 import { supabase } from '../lib/supabase.js'
 import { nextNavOrder, pagePaths, parentOf } from '../lib/pageTree.js'
 import { RESERVED_SLUGS, slugify } from '../lib/site.js'
@@ -23,7 +24,7 @@ export default function GroupFormDialog({ open, group, pages, onClose, onSaved }
       lazyMount
       unmountOnExit
     >
-      <Portal>
+      <AdminPortal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
           <Dialog.Content>
@@ -53,7 +54,7 @@ export default function GroupFormDialog({ open, group, pages, onClose, onSaved }
             </Dialog.CloseTrigger>
           </Dialog.Content>
         </Dialog.Positioner>
-      </Portal>
+      </AdminPortal>
     </Dialog.Root>
   )
 }

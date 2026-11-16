@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth.js'
 import { supabase } from '../lib/supabase.js'
 import { ROOT, childrenByParent, pagePaths } from '../lib/pageTree.js'
 import { LOGO_SRC, SITE_NAME } from '../lib/site.js'
 import SiteAdminBar from './SiteAdminBar.jsx'
 import './site.css'
 
-// Turns the flat rows into nested nav nodes (each with its `path`), leaving out pages that
-// are hidden from the navigation and groups that end up with nothing to show.
+// Turns the flat rows into nested nav nodes (each with its `path`), leaving out drafts, pages
+// that are hidden from the navigation, and groups that end up with nothing to show.
+// (Drafts are only ever in `rows` for a logged-in editor; the navigation always shows what
+// visitors see.)
 function buildNav(rows, paths) {
   const tree = childrenByParent(rows)
   function build(parentId) {
@@ -16,7 +19,7 @@ function buildNav(rows, paths) {
       if (row.kind === 'group') {
         const children = build(row.id)
         if (children.length > 0) nodes.push({ ...row, children })
-      } else if (row.show_in_nav && paths.has(row.id)) {
+      } else if (row.published && row.show_in_nav && paths.has(row.id)) {
         nodes.push({ ...row, path: paths.get(row.id) })
       }
     }
@@ -31,31 +34,60 @@ function containsPath(node, pathname) {
 }
 
 export default function SiteLayout() {
-  // Every published page and group. One request serves both the navigation and working out
-  // which page a URL points at (see SitePage). null while loading.
+  const { session, loading: authLoading } = useAuth()
+  const isEditor = Boolean(session)
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+
+  // Every page and group this person may see: published ones for visitors, plus drafts for
+  // a logged-in editor (so an editor can open and edit a draft from the bar). One request
+  // serves both the navigation and working out which page a URL points at. null while loading.
   const [rows, setRows] = useState(null)
 
+  const load = useCallback(async () => {
+    let query = supabase.from('pages').select('*')
+    if (!isEditor) query = query.eq('published', true)
+    const { data, error } = await query
+    if (error) console.error('Could not load pages', error)
+    return data ?? []
+  }, [isEditor])
+
+  // Runs once we know whether someone is logged in, and again on logging in or out.
   useEffect(() => {
+    if (authLoading) return
     let cancelled = false
-    supabase
-      .from('pages')
-      .select('*')
-      .eq('published', true)
-      .then(({ data, error }) => {
-        if (error) console.error('Could not load pages', error)
-        if (!cancelled) setRows(data ?? [])
-      })
+    load().then((data) => {
+      if (!cancelled) setRows(data)
+    })
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [authLoading, load])
 
   const paths = useMemo(() => pagePaths(rows ?? []), [rows])
   const nav = useMemo(() => buildNav(rows ?? [], paths), [rows, paths])
 
+  // "/menus/lunch/" and "/menus/lunch" are the same page.
+  const path = pathname.replace(/\/+$/, '') || '/'
+  // The page this URL points at, if any. Only pages have an address of their own; a group's
+  // path on its own is not a page.
+  const page = useMemo(
+    () => rows?.find((row) => row.kind !== 'group' && paths.get(row.id) === path) ?? null,
+    [rows, paths, path],
+  )
+
+  // Called after the current page is edited from the bar. Its address may have changed
+  // (new slug or group), in which case we follow it there.
+  async function handlePageSaved(saved) {
+    const fresh = await load()
+    setRows(fresh)
+    const newPath = pagePaths(fresh).get(saved.id)
+    if (newPath && newPath !== path) navigate(newPath, { replace: true })
+  }
+
   return (
     <div className="site">
-      <SiteAdminBar />
+      <SiteAdminBar page={page} pages={rows ?? []} onPageSaved={handlePageSaved} />
       <header className="site-header">
         <Link to="/" className="site-logo">
           <img src={LOGO_SRC} alt="" width="40" height="40" />
@@ -68,7 +100,7 @@ export default function SiteLayout() {
         </nav>
       </header>
       <main className="site-main">
-        <Outlet context={{ rows, paths }} />
+        <Outlet context={{ loading: !rows, page }} />
       </main>
     </div>
   )
