@@ -16,7 +16,8 @@
   min-width: 0;
 }
 
-.editable-text-editing > div {
+.editable-text-editing > span {
+  display: block;
   visibility: hidden;
 }
 

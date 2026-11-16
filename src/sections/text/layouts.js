@@ -17,6 +17,19 @@ export const TEXT_WIDTHS = [
 
 export const FULL_WIDTH = '64rem'
 
+// The levels the heading above the columns can be: 1 is the largest and most important.
+// `size` is only for the picture in the settings dialog; the real sizes are in text.css.
+export const HEADING_LEVELS = [
+  { id: 1, label: 'Heading 1', hint: 'Largest', size: '2xl' },
+  { id: 2, label: 'Heading 2', hint: 'Medium', size: 'xl' },
+  { id: 3, label: 'Heading 3', hint: 'Smallest', size: 'md' },
+]
+
+export function getHeadingLevel(id) {
+  // Level 2 is what the heading was before the level could be chosen.
+  return HEADING_LEVELS.find((level) => level.id === Number(id)) ?? HEADING_LEVELS[1]
+}
+
 export function getTextLayout(id) {
   return TEXT_LAYOUTS.find((layout) => layout.id === id) ?? TEXT_LAYOUTS[0]
 }

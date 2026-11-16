@@ -4,8 +4,9 @@ import TextSection from './TextSection.jsx'
 export default {
   type: 'text',
   label: 'Text',
-  description: 'Text with headings, bold, italics and lists, in one to three columns.',
-  // layout and width: see layouts.js. The text itself is stored per column, as it is written.
+  description: 'Formatted text in one to three columns, with an optional heading above.',
+  // layout and width: see layouts.js. heading: optional plain text above the columns, headingLevel: 1 to 3.
+  // The text itself is stored per column, as it is written.
   defaultContent: { layout: 'one', width: 'medium' },
   Render: TextSection,
   Settings: lazy(() => import('./TextSettings.jsx')),

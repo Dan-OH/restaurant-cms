@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { Box, Button, Dialog, Stack } from '@chakra-ui/react'
+import { Box, Button, Dialog, Stack, Text } from '@chakra-ui/react'
 import OptionCards from '../../admin/OptionCards.jsx'
 import { optionColor } from '../../admin/optionColor.js'
-import { TEXT_LAYOUTS, TEXT_WIDTHS, getTextLayout, getTextWidth } from './layouts.js'
+import { HEADING_LEVELS, TEXT_LAYOUTS, TEXT_WIDTHS, getHeadingLevel, getTextLayout, getTextWidth } from './layouts.js'
 
 // The text section's settings, shown inside the settings dialog (see src/sections/index.js):
-// how many columns it has and, for a single column, how wide it is.
+// how many columns it has, for a single column how wide it is, and the level of the heading.
 export default function TextSettings({ content, onChange, onClose }) {
   const [layoutId, setLayoutId] = useState(getTextLayout(content.layout).id)
   const [widthId, setWidthId] = useState(getTextWidth(content.width).id)
+  const [headingLevel, setHeadingLevel] = useState(getHeadingLevel(content.headingLevel).id)
 
   const single = getTextLayout(layoutId).columns.length === 1
   const fewerColumns = getTextLayout(layoutId).columns.length < getTextLayout(content.layout).columns.length
@@ -16,6 +17,7 @@ export default function TextSettings({ content, onChange, onClose }) {
   function apply() {
     onChange('layout', layoutId)
     onChange('width', widthId)
+    onChange('headingLevel', headingLevel)
     onClose()
   }
 
@@ -62,6 +64,27 @@ export default function TextSettings({ content, onChange, onClose }) {
               }))}
             />
           )}
+
+          <OptionCards
+            label="Heading level"
+            value={headingLevel}
+            onChange={setHeadingLevel}
+            options={HEADING_LEVELS.map((level) => ({
+              id: level.id,
+              label: level.label,
+              hint: level.hint,
+              preview: (selected) => (
+                <Text fontSize={level.size} fontWeight="bold" lineHeight="1" color={optionColor(selected)}>
+                  H{level.id}
+                </Text>
+              ),
+            }))}
+            helperText={
+              content.heading?.trim()
+                ? 'Sets the heading’s size, and its importance to search engines and screen readers. A page should normally have just one Heading 1.'
+                : 'This section has no heading yet. Type one above the text on the page and it will use this level.'
+            }
+          />
         </Stack>
       </Dialog.Body>
       <Dialog.Footer>

@@ -1,10 +1,12 @@
+import EditableText from '../EditableText.jsx'
 import RichText from '../RichText.jsx'
 import { isEmptyDoc, textToDoc } from '../richText.js'
-import { COLUMN_NAMES, FULL_WIDTH, getTextLayout, getTextWidth } from './layouts.js'
+import { COLUMN_NAMES, FULL_WIDTH, getHeadingLevel, getTextLayout, getTextWidth } from './layouts.js'
 import './text.css'
 
-// Formatted text in one, two or three columns (see layouts.js). The layout, and the width
-// of a one-column section, are chosen in the section's settings.
+// An optional heading, then formatted text in one, two or three columns (see layouts.js).
+// The heading sits above all the columns. The heading's level, the layout, and the width
+// of a one-column section are chosen in the section's settings.
 export default function TextSection({ content, onChange }) {
   const layout = getTextLayout(content.layout)
   const single = layout.columns.length === 1
@@ -16,8 +18,11 @@ export default function TextSection({ content, onChange }) {
     return { name, value }
   })
 
-  // Nothing to show visitors until some text has been written.
-  if (!onChange && columns.every((column) => isEmptyDoc(column.value))) return null
+  const hasHeading = Boolean(content.heading?.trim())
+  const headingLevel = getHeadingLevel(content.headingLevel).id
+
+  // Nothing to show visitors until something has been written.
+  if (!onChange && !hasHeading && columns.every((column) => isEmptyDoc(column.value))) return null
 
   return (
     <section
@@ -29,21 +34,34 @@ export default function TextSection({ content, onChange }) {
         '--section-text-columns': layout.columns.map((width) => `minmax(0, ${width}fr)`).join(' '),
       }}
     >
-      {columns.map((column, index) => (
-        <RichText
-          key={column.name}
-          value={column.value}
-          onChange={
-            onChange &&
-            ((next) => {
-              onChange(column.name, next)
-              // Once edited, the old plain-text copy is out of date; drop it.
-              if (index === 0 && content.text !== undefined) onChange('text', undefined)
-            })
-          }
-          placeholder="Write something…"
+      {/* While editing the heading is always there to type into; visitors only get it if
+          it has been filled in. */}
+      {(onChange || hasHeading) && (
+        <EditableText
+          as={`h${headingLevel}`}
+          className={`section-text-heading section-text-heading-${headingLevel}`}
+          value={content.heading}
+          onChange={onChange && ((heading) => onChange('heading', heading))}
+          placeholder="Heading (optional)"
         />
-      ))}
+      )}
+      <div className="section-text-columns">
+        {columns.map((column, index) => (
+          <RichText
+            key={column.name}
+            value={column.value}
+            onChange={
+              onChange &&
+              ((next) => {
+                onChange(column.name, next)
+                // Once edited, the old plain-text copy is out of date; drop it.
+                if (index === 0 && content.text !== undefined) onChange('text', undefined)
+              })
+            }
+            placeholder="Write something…"
+          />
+        ))}
+      </div>
     </section>
   )
 }
