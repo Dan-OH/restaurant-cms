@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabase.js'
 //   editing      True once editing is on and the page's sections have loaded.
 //   setSections  Change the working copy: setSections((current) => next).
 //   dirty        True when the working copy differs from what is saved.
-//   save()       Writes the working copy to the database.
+//   save()       Writes the working copy to the database; resolves to true on success.
 //   saving, error
 export function usePageSections(pageId, editing) {
   // Both are tagged with the page they belong to, so one page's sections are never shown,
@@ -71,8 +71,9 @@ export function usePageSections(pageId, editing) {
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
 
+  // Resolves to true when everything was saved.
   async function save() {
-    if (!working) return
+    if (!working) return false
     setError('')
     setSaving(true)
     const rows = working.map((section, position) => ({ ...section, page_id: pageId, position }))
@@ -86,8 +87,12 @@ export function usePageSections(pageId, editing) {
     if (!error && removedIds.length) ({ error } = await supabase.from('page_sections').delete().in('id', removedIds))
 
     setSaving(false)
-    if (error) setError(`Could not save: ${error.message}`)
-    else setLoaded({ pageId, sections: working })
+    if (error) {
+      setError(`Could not save: ${error.message}`)
+      return false
+    }
+    setLoaded({ pageId, sections: working })
+    return true
   }
 
   return {

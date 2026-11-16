@@ -7,6 +7,7 @@ import { EMBED_CLASS, embeddedSystem } from './embeddedSystem.js'
 import FaIcon from './FaIcon.jsx'
 import PageFormDialog from './PageFormDialog.jsx'
 import { PortalContainerContext } from './portalContainer.js'
+import UnsavedChangesDialog from './UnsavedChangesDialog.jsx'
 
 // Keep in sync with the placeholder in src/site/site.css, which holds this space while
 // this file is downloading.
@@ -103,6 +104,8 @@ export default function EditorBar({ page, pages, onPageSaved, content }) {
         {/* Dialogs render in here: inside the embedded styles, but outside the bar's dark
             colours, so they look the same as they do in the dashboard. See portalContainer.js. */}
         <div className={EMBED_CLASS} ref={setPortalContainer} />
+
+        <UnsavedChangesDialog saving={content.saving} {...content.leavePrompt} />
 
         <PageFormDialog
           open={dialog.open}

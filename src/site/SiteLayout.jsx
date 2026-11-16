@@ -83,25 +83,49 @@ export default function SiteLayout() {
   const wantsEditing = isEditor && Boolean(page) && searchParams.has('edit')
   const content = usePageSections(page?.id, wantsEditing)
 
-  function confirmDiscard() {
-    return !content.dirty || window.confirm('You have unsaved changes. Leave without saving?')
+  // Set while the "unsaved changes" dialog is open: the thing the editor was trying to do
+  // (finish editing, or follow a link), to be carried out if they choose to go ahead.
+  const [pendingLeave, setPendingLeave] = useState(null)
+
+  // Runs `leave` straight away, or asks first if there are unsaved changes.
+  function leaveEditing(leave) {
+    if (content.dirty) setPendingLeave(() => leave)
+    else leave()
   }
 
   const contentEditor = {
     ...content,
     start: () => setSearchParams({ edit: '1' }),
-    stop: () => {
-      if (confirmDiscard()) setSearchParams({})
+    stop: () => leaveEditing(() => setSearchParams({})),
+    // Drives the dialog, which is drawn by the editor bar (UnsavedChangesDialog.jsx).
+    leavePrompt: {
+      open: pendingLeave !== null,
+      onCancel: () => setPendingLeave(null),
+      onDiscard: () => {
+        setPendingLeave(null)
+        pendingLeave()
+      },
+      onSave: async () => {
+        // If saving fails, close the dialog and stay: the bar shows the error.
+        const saved = await content.save()
+        setPendingLeave(null)
+        if (saved) pendingLeave()
+      },
     },
   }
 
-  // Following a link while there are unsaved changes would silently lose them, so ask first.
+  // Following a link while there are unsaved changes would silently lose them, so hold the
+  // click and ask first. Links that open a new tab are fine: this page stays as it is.
   function handleClickCapture(event) {
-    if (!content.dirty || !event.target.closest?.('a[href]')) return
-    if (!confirmDiscard()) {
-      event.preventDefault()
-      event.stopPropagation()
-    }
+    const link = event.target.closest?.('a[href]')
+    if (!content.dirty || !link || link.target === '_blank') return
+    event.preventDefault()
+    event.stopPropagation()
+    const href = link.getAttribute('href')
+    setPendingLeave(() => () => {
+      if (href.startsWith('/')) navigate(href)
+      else window.location.assign(href)
+    })
   }
 
   // Called after the current page is edited from the bar. Its address may have changed
