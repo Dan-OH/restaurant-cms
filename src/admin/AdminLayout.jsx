@@ -2,6 +2,7 @@ import { Box, Button, Center, Container, Flex, Heading, Spinner, Stack, Text } f
 import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import ExternalLinkButton from './ExternalLinkButton.jsx'
+import FaIcon from './FaIcon.jsx'
 import { useAuth } from './useAuth.js'
 
 // Shown at the left of the top bar; replace with the product name once there is one.
@@ -95,6 +96,8 @@ export default function AdminLayout() {
             </Text>
             <Button variant="ghost" size="sm" justifyContent="flex-start" onClick={() => supabase.auth.signOut()}>
               Log out
+              {/* f2f5 = right-from-bracket (arrow leaving a door) */}
+              <FaIcon code="f2f5" />
             </Button>
           </Stack>
         </Flex>

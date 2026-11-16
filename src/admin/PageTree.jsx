@@ -7,7 +7,7 @@ import FaIcon from './FaIcon.jsx'
 // Shared by the column headings and every row so the columns line up:
 // handle | title | URL | status | navigation | actions
 // The right-hand columns have fixed widths, so they stay aligned however deeply a row is nested.
-export const COLUMNS = '1.5rem minmax(8rem, 1.5fr) minmax(6rem, 1fr) 6rem 6rem 14rem'
+export const COLUMNS = '1.5rem minmax(8rem, 1.5fr) minmax(6rem, 1fr) 6rem 6rem 17rem'
 
 // Space between rows, and the drop line that sits centred in it.
 const ROW_GAP = '0.5rem'
@@ -144,9 +144,13 @@ function PageCells({ page, ctx }) {
         )}
         <Button size="sm" variant="outline" onClick={() => ctx.onEditPage(page)}>
           Edit
+          {/* f303 = pencil */}
+          <FaIcon code="f303" />
         </Button>
         <Button size="sm" variant="outline" colorPalette="red" onClick={() => ctx.onDelete(page)}>
           Delete
+          {/* f2ed = trash can */}
+          <FaIcon code="f2ed" />
         </Button>
       </HStack>
     </>
@@ -174,9 +178,13 @@ function GroupCells({ group, ctx }) {
       <HStack justify="flex-end" gap="2">
         <Button size="sm" variant="outline" onClick={() => ctx.onEditGroup(group)}>
           Edit
+          {/* f303 = pencil */}
+          <FaIcon code="f303" />
         </Button>
         <Button size="sm" variant="outline" colorPalette="red" onClick={() => ctx.onDelete(group)}>
           Delete
+          {/* f2ed = trash can */}
+          <FaIcon code="f2ed" />
         </Button>
       </HStack>
     </>

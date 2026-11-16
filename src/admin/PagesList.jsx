@@ -3,6 +3,7 @@ import { Alert, Box, Button, Center, Flex, Heading, HStack, Spinner, Text } from
 import { supabase } from '../lib/supabase.js'
 import { ROOT, childrenByParent, descendantIds, pagePaths, parentOf } from '../lib/pageTree.js'
 import DeletePageDialog from './DeletePageDialog.jsx'
+import FaIcon from './FaIcon.jsx'
 import GroupFormDialog from './GroupFormDialog.jsx'
 import PageFormDialog from './PageFormDialog.jsx'
 import PageTree, { COLUMNS } from './PageTree.jsx'
@@ -200,8 +201,13 @@ export default function PagesList() {
         <HStack gap="2">
           <Button variant="outline" onClick={() => setGroupDialog({ open: true, item: null })}>
             New group
+            {/* 2b = plus */}
+            <FaIcon code="2b" />
           </Button>
-          <Button onClick={() => setPageDialog({ open: true, item: null })}>New page</Button>
+          <Button onClick={() => setPageDialog({ open: true, item: null })}>
+            New page
+            <FaIcon code="2b" />
+          </Button>
         </HStack>
       </Flex>
 
