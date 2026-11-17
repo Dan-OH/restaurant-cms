@@ -1,12 +1,13 @@
-import EditableText from '../EditableText.jsx'
+import EditableHeading from '../EditableHeading.jsx'
 import RichText from '../RichText.jsx'
 import { isEmptyDoc, textToDoc } from '../richText.js'
-import { COLUMN_NAMES, FULL_WIDTH, getHeadingLevel, getTextLayout, getTextWidth } from './layouts.js'
+import { COLUMN_NAMES, FULL_WIDTH, HEADING_LEVELS, getHeadingLevel, getTextLayout, getTextWidth } from './layouts.js'
 import './text.css'
 
 // An optional heading, then formatted text in one, two or three columns (see layouts.js).
-// The heading sits above all the columns. The heading's level, the layout, and the width
-// of a one-column section are chosen in the section's settings.
+// The heading sits above all the columns; its level is picked from the toolbar that floats
+// above it while it is being typed into. The layout, and the width of a one-column section,
+// are chosen in the section's settings.
 export default function TextSection({ content, onChange }) {
   const layout = getTextLayout(content.layout)
   const single = layout.columns.length === 1
@@ -37,11 +38,13 @@ export default function TextSection({ content, onChange }) {
       {/* While editing the heading is always there to type into; visitors only get it if
           it has been filled in. */}
       {(onChange || hasHeading) && (
-        <EditableText
-          as={`h${headingLevel}`}
-          className={`section-text-heading section-text-heading-${headingLevel}`}
+        <EditableHeading
+          className="section-text-heading"
           value={content.heading}
+          level={headingLevel}
+          levels={HEADING_LEVELS}
           onChange={onChange && ((heading) => onChange('heading', heading))}
+          onLevelChange={onChange && ((level) => onChange('headingLevel', level))}
           placeholder="Heading (optional)"
         />
       )}
