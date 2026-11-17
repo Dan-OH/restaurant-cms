@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Alert, Button, CloseButton, Dialog } from '@chakra-ui/react'
+import { Alert, Box, Button, CloseButton, Dialog } from '@chakra-ui/react'
 import AdminPortal from './AdminPortal.jsx'
 import FaIcon from './FaIcon.jsx'
 import ImageCropper from './ImageCropper.jsx'
@@ -12,7 +12,8 @@ import ImageCropper from './ImageCropper.jsx'
 //   error      Message to show if that failed.
 //   onCancel   Close without cropping.
 //   onConfirm  Called with the chosen part of the image (see ImageCropper's onAreaChange).
-export default function ImageCropDialog({ source, preset, busy, error, onCancel, onConfirm }) {
+//   children   Shown under the cropper, e.g. the image's description field.
+export default function ImageCropDialog({ source, preset, busy, error, onCancel, onConfirm, children }) {
   const [area, setArea] = useState(null)
 
   return (
@@ -41,6 +42,7 @@ export default function ImageCropDialog({ source, preset, busy, error, onCancel,
                 </Alert.Root>
               )}
               {source && <ImageCropper source={source} preset={preset} onAreaChange={setArea} />}
+              {children && <Box mt="6">{children}</Box>}
             </Dialog.Body>
             <Dialog.Footer>
               <Button variant="outline" onClick={onCancel} disabled={busy}>

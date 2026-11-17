@@ -1,23 +1,27 @@
 import { useState } from 'react'
-import { Badge, Box, Button, Center, CloseButton, Dialog, Flex, Heading, HStack, Link, Stack, Text } from '@chakra-ui/react'
-import { VIEWABLE_TYPES, formatBytes, formatDate } from '../lib/assets.js'
+import { Alert, Badge, Box, Button, Center, CloseButton, Dialog, Flex, Heading, HStack, Link, Stack, Text } from '@chakra-ui/react'
+import { VIEWABLE_TYPES, formatBytes, formatDate, setAssetDescription } from '../lib/assets.js'
 import { imageUrl } from '../lib/images.js'
 import { IMAGE_PRESETS } from '../sections/imagePresets.js'
 import AdminPortal from './AdminPortal.jsx'
+import AltTextField from './AltTextField.jsx'
 import ExternalLinkButton from './ExternalLinkButton.jsx'
 import FaIcon from './FaIcon.jsx'
 
 // The details of one asset (see lib/assets.js): the original with the part each crop kept
 // outlined on it, and a list of the crops with their shape and where they are used.
+// Its description (alt text) can be edited here too.
+//
 // `onDelete` is called when the user asks to delete it (DeleteAssetDialog then confirms).
-export default function AssetDialog({ open, asset, onClose, onDelete }) {
+// `onChanged` is called after its description is saved, to reload the list.
+export default function AssetDialog({ open, asset, onClose, onDelete, onChanged }) {
   return (
     <Dialog.Root size="xl" open={open} onOpenChange={(e) => !e.open && onClose()} lazyMount unmountOnExit>
       <AdminPortal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
           <Dialog.Content>
-            {asset && <AssetDetails asset={asset} onClose={onClose} onDelete={onDelete} />}
+            {asset && <AssetDetails asset={asset} onClose={onClose} onDelete={onDelete} onChanged={onChanged} />}
             <Dialog.CloseTrigger asChild>
               <CloseButton size="sm" />
             </Dialog.CloseTrigger>
@@ -28,7 +32,7 @@ export default function AssetDialog({ open, asset, onClose, onDelete }) {
   )
 }
 
-function AssetDetails({ asset, onClose, onDelete }) {
+function AssetDetails({ asset, onClose, onDelete, onChanged }) {
   // The crop being pointed at in the list, highlighted on the original.
   const [highlight, setHighlight] = useState(null)
   const details = [
@@ -50,6 +54,9 @@ function AssetDetails({ asset, onClose, onDelete }) {
       <Dialog.Body>
         <Stack gap="6">
           <Original asset={asset} highlight={highlight} />
+
+          {/* Remounted per asset, so it starts from that asset's description. */}
+          <Description key={asset.id} asset={asset} onChanged={onChanged} />
 
           <Stack gap="3">
             <Heading as="h3" size="sm">
@@ -83,6 +90,66 @@ function AssetDetails({ asset, onClose, onDelete }) {
         <Button onClick={onClose}>Close</Button>
       </Dialog.Footer>
     </>
+  )
+}
+
+// The image's description, saved to every place it is shown.
+function Description({ asset, onChanged }) {
+  const [text, setText] = useState(asset.alt)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [saved, setSaved] = useState(false)
+  const changed = text.trim() !== asset.alt.trim()
+  const places = asset.usedOn.length
+
+  async function save() {
+    setError('')
+    setSaving(true)
+    try {
+      await setAssetDescription(asset.id, text)
+      setSaved(true)
+      onChanged()
+    } catch (problem) {
+      setError(`Could not save the description: ${problem.message}`)
+    }
+    setSaving(false)
+  }
+
+  // Pages showing the image without its description (or with another one) are brought in
+  // line by saving, even without editing the text.
+  const outOfLine = asset.altDiffers || (asset.missingAlt && Boolean(asset.alt.trim()))
+  let note
+  if (asset.altDiffers) note = 'Some pages show this image with a different description. Saving uses this one everywhere.'
+  else if (outOfLine) note = 'Some pages show this image without a description. Saving adds this one there too.'
+  else if (places > 0) note = `Saving updates it on ${places === 1 ? 'the page' : `all ${places} pages`} using this image.`
+
+  return (
+    <Stack gap="3" p="4" borderWidth="1px" borderRadius="md">
+      {error && (
+        <Alert.Root status="error">
+          <Alert.Indicator />
+          <Alert.Title>{error}</Alert.Title>
+        </Alert.Root>
+      )}
+      <AltTextField
+        value={text}
+        onChange={(value) => {
+          setText(value)
+          setSaved(false)
+        }}
+        note={note}
+      />
+      <HStack gap="3" justify="flex-end">
+        {saved && !changed && (
+          <Text fontSize="sm" color="fg.success">
+            Saved
+          </Text>
+        )}
+        <Button size="sm" disabled={!changed && !outOfLine} loading={saving} onClick={save}>
+          Save description
+        </Button>
+      </HStack>
+    </Stack>
   )
 }
 

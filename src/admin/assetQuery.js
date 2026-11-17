@@ -39,7 +39,13 @@ export const SORTS = [
   { id: 'name-desc', label: 'Name: Z–A', compare: (a, b) => -byName(a, b) },
 ]
 
-export const DEFAULTS = { q: '', usage: 'all', page: '', shape: '', sort: 'newest' }
+export const DEFAULTS = { q: '', usage: 'all', page: '', shape: '', alt: '', sort: 'newest' }
+
+export const ALT_FILTERS = [
+  { id: '', label: 'Any' },
+  { id: 'missing', label: 'None (decorative)' },
+  { id: 'written', label: 'Written' },
+]
 
 // The current choices from the address, falling back to the defaults for anything missing
 // or no longer valid.
@@ -47,6 +53,7 @@ export function readQuery(params) {
   const query = Object.fromEntries(Object.entries(DEFAULTS).map(([key, value]) => [key, params.get(key) ?? value]))
   if (!USAGE_FILTERS.some((option) => option.id === query.usage)) query.usage = DEFAULTS.usage
   if (!SORTS.some((option) => option.id === query.sort)) query.sort = DEFAULTS.sort
+  if (!ALT_FILTERS.some((option) => option.id === query.alt)) query.alt = DEFAULTS.alt
   return query
 }
 
@@ -76,6 +83,8 @@ export function filterAssets(assets, query) {
     const name = (asset.file_name ?? '').toLowerCase()
     if (!words.every((word) => name.includes(word))) return false
     if (query.page && !asset.usedOn.some((page) => page.id === query.page)) return false
+    if (query.alt === 'missing' && !asset.missingAlt) return false
+    if (query.alt === 'written' && asset.missingAlt) return false
     if (query.shape === 'none') return asset.crops.length === 0
     if (query.shape && !asset.crops.some((crop) => crop.preset === query.shape)) return false
     return true

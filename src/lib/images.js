@@ -86,10 +86,37 @@ async function findOriginal(hash, bytes) {
   return null
 }
 
-// SHA-256 of a file's contents, as hex.
-async function fingerprint(blob) {
-  const digest = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer())
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+// SHA-256 of a file's contents, as hex. Remembered per file, as a file is fingerprinted both
+// when it is chosen (see knownDescription) and when it is uploaded.
+const fingerprints = new WeakMap()
+function fingerprint(blob) {
+  if (!fingerprints.has(blob)) {
+    fingerprints.set(
+      blob,
+      blob
+        .arrayBuffer()
+        .then((bytes) => crypto.subtle.digest('SHA-256', bytes))
+        .then((digest) => [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')),
+    )
+  }
+  return fingerprints.get(blob)
+}
+
+// If this exact file is already an asset, its description (alt text); otherwise null. Quick:
+// only checks fingerprints, without fetching older images that don't have one yet.
+export async function knownDescription(file) {
+  const { data } = await supabase
+    .from('assets')
+    .select('alt')
+    .eq('content_hash', await fingerprint(file))
+    .maybeSingle()
+  return data ? data.alt : null
+}
+
+// The description stored for the asset with this original, or '' if it has none.
+export async function assetDescription(originalPath) {
+  const { data } = await supabase.from('assets').select('alt').eq('original_path', originalPath).maybeSingle()
+  return data?.alt ?? ''
 }
 
 // Crops `original` (the file stored at `originalPath`) to `preset`, keeping `area` (see

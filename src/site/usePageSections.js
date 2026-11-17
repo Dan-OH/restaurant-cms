@@ -87,7 +87,17 @@ export function usePageSections(pageId, editing) {
     if (!working) return false
     setError('')
     setSaving(true)
-    const rows = working.map((section, position) => ({ ...section, page_id: pageId, position }))
+    // An image has one description, shown wherever it appears (see syncDescriptions in
+    // lib/assets.js). Descriptions written or changed here are copied to the other sections
+    // on this page that show the same image, and after saving to the image's other pages.
+    const descriptions = changedDescriptions(saved, working)
+    const synced = working.map((section) => {
+      const id = [...assetIdsIn(section.content)].find((assetId) => descriptions.has(assetId))
+      return id === undefined || section.content.alt === descriptions.get(id)
+        ? section
+        : { ...section, content: { ...section.content, alt: descriptions.get(id) } }
+    })
+    const rows = synced.map((section, position) => ({ ...section, page_id: pageId, position }))
     const keptIds = new Set(rows.map((row) => row.id))
     const removedIds = saved.map((section) => section.id).filter((id) => !keptIds.has(id))
 
@@ -102,8 +112,14 @@ export function usePageSections(pageId, editing) {
       setError(`Could not save: ${error.message}`)
       return false
     }
-    setLoaded({ pageId, sections: working })
+    setLoaded({ pageId, sections: synced })
+    if (synced.some((section, index) => section !== working[index])) setDraft({ pageId, sections: synced })
     deleteRemovedImages(saved.filter((section) => removedIds.includes(section.id)))
+    if (descriptions.size) {
+      import('../lib/assets.js')
+        .then(({ syncDescriptions }) => syncDescriptions(descriptions))
+        .catch((problem) => console.error('Could not update image descriptions', problem))
+    }
     return true
   }
 
@@ -129,4 +145,21 @@ export function usePageSections(pageId, editing) {
     error,
     save,
   }
+}
+
+// Asset id -> description, for each image whose description was written or changed in the
+// working copy since the last save. Clearing a description only affects that one section.
+function changedDescriptions(saved, working) {
+  const before = new Map(saved.map((section) => [section.id, section.content]))
+  const descriptions = new Map()
+  for (const section of working) {
+    const alt = (section.content.alt ?? '').trim()
+    if (!alt) continue
+    const previous = before.get(section.id)
+    const sameImages =
+      previous && [...assetIdsIn(previous)].join() === [...assetIdsIn(section.content)].join()
+    if (sameImages && (previous.alt ?? '').trim() === alt) continue
+    for (const id of assetIdsIn(section.content)) descriptions.set(id, alt)
+  }
+  return descriptions
 }

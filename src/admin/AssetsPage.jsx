@@ -4,6 +4,7 @@ import {
   Badge,
   Box,
   Button,
+  Card,
   Center,
   CloseButton,
   Field,
@@ -23,6 +24,7 @@ import { formatBytes, formatDate, loadAssets, previewPath } from '../lib/assets.
 import { imageUrl } from '../lib/images.js'
 import AssetDialog from './AssetDialog.jsx'
 import {
+  ALT_FILTERS,
   DEFAULTS,
   SORTS,
   USAGE_FILTERS,
@@ -53,10 +55,19 @@ export default function AssetsPage() {
 
   const load = useCallback(
     () =>
-      loadAssets().then(setAssets, (problem) =>
+      loadAssets().then(
+        (fresh) => {
+          setAssets(fresh)
+          // Keep the open dialog showing the fresh copy of its asset.
+          setSelected((current) => ({
+            ...current,
+            asset: current.asset && (fresh.find((asset) => asset.id === current.asset.id) ?? current.asset),
+          }))
+        },
+        (problem) =>
         setError(
           problem.message.includes('assets')
-            ? `${problem.message}. Have migrations 006 and 007 (in supabase/migrations/) been run?`
+            ? `${problem.message}. Have migrations 006 to 008 (in supabase/migrations/) been run?`
             : problem.message,
         ),
       ),
@@ -84,13 +95,13 @@ export default function AssetsPage() {
   const pages = useMemo(() => pagesInUse(all), [all])
   const shapes = useMemo(() => shapesInUse(all), [all])
   // A page in the address that no image is used on any more (e.g. after deleting) is ignored.
-  const { q, shape, usage, sort } = query
+  const { q, shape, alt, usage, sort } = query
   const page = pages.some((option) => option.id === query.page) ? query.page : ''
   // Filtered by everything but usage, so each usage button can show its count.
-  const filtered = useMemo(() => filterAssets(all, { q, page, shape }), [all, q, page, shape])
+  const filtered = useMemo(() => filterAssets(all, { q, page, shape, alt }), [all, q, page, shape, alt])
   const shown = useMemo(() => sortAssets(applyUsage(filtered, usage), sort), [filtered, usage, sort])
   const grouped = SORTS.find((option) => option.id === query.sort).grouped
-  const filtering = Boolean(q || page || shape || usage !== DEFAULTS.usage)
+  const filtering = Boolean(q || page || shape || alt || usage !== DEFAULTS.usage)
 
   const open = (asset) => setSelected({ open: true, asset })
 
@@ -154,6 +165,12 @@ export default function AssetsPage() {
             value={query.shape}
             onChange={(value) => setChoice('shape', value)}
             options={[{ id: '', label: 'Any shape' }, ...shapes]}
+          />
+          <Choice
+            label="Description"
+            value={alt}
+            onChange={(value) => setChoice('alt', value)}
+            options={ALT_FILTERS}
           />
           <Choice
             label="Sort by"
@@ -231,6 +248,7 @@ export default function AssetsPage() {
         asset={selected.asset}
         onClose={() => setSelected((current) => ({ ...current, open: false }))}
         onDelete={() => setDeleting(true)}
+        onChanged={load}
       />
 
       <DeleteAssetDialog
@@ -281,52 +299,57 @@ function AssetCard({ asset, onOpen }) {
   const details = [asset.width && `${asset.width} × ${asset.height}`, formatBytes(asset.size_bytes)].filter(Boolean)
 
   return (
-    <Box
-      as="button"
-      type="button"
-      onClick={onOpen}
-      textAlign="start"
-      bg="bg"
-      borderWidth="1px"
-      borderRadius="lg"
+    // A Chakra Card, drawn as a <button> so the whole card opens the asset. The card is a
+    // column, so its content sits at the top however tall the row makes it.
+    <Card.Root
+      asChild
       overflow="hidden"
+      textAlign="start"
       cursor="pointer"
       transition="box-shadow 0.15s, border-color 0.15s"
       _hover={{ shadow: 'md', borderColor: 'border.emphasized' }}
       _focusVisible={{ outline: '2px solid', outlineColor: 'colorPalette.focusRing', outlineOffset: '2px' }}
     >
-      <Center aspectRatio={4 / 3} bg="bg.muted">
-        {preview ? (
-          <Box as="img" src={imageUrl(preview)} alt="" loading="lazy" w="full" h="full" objectFit="cover" />
-        ) : (
-          // f03e = image
-          <FaIcon code="f03e" fontSize="2xl" color="fg.subtle" />
-        )}
-      </Center>
-      <Stack gap="1.5" p="3">
-        <Text fontWeight="medium" truncate title={asset.file_name ?? undefined}>
-          {asset.file_name || 'Untitled image'}
-        </Text>
-        <Text fontSize="xs" color="fg.muted">
-          {[...details, `Uploaded ${formatDate(asset.created_at)}`].join(' · ')}
-        </Text>
-        <HStack gap="2" wrap="wrap">
-          <Badge variant="subtle">
-            {asset.crops.length} {asset.crops.length === 1 ? 'crop' : 'crops'}
-          </Badge>
-          {asset.usedOn.length > 0 ? (
-            <Badge colorPalette="green" variant="subtle" maxW="full">
-              <Text as="span" truncate>
-                Used on {asset.usedOn.map((page) => page.title).join(', ')}
-              </Text>
-            </Badge>
+      <button type="button" onClick={onOpen}>
+        {/* overflow keeps the 4:3 box from growing to fit a taller image inside the card's column. */}
+        <Center aspectRatio={4 / 3} bg="bg.muted" w="full" flexShrink="0" overflow="hidden">
+          {preview ? (
+            <Box as="img" src={imageUrl(preview)} alt="" loading="lazy" w="full" h="full" objectFit="cover" />
           ) : (
-            <Badge colorPalette="orange" variant="subtle">
-              Not in use
-            </Badge>
+            // f03e = image
+            <FaIcon code="f03e" fontSize="2xl" color="fg.subtle" />
           )}
-        </HStack>
-      </Stack>
-    </Box>
+        </Center>
+        <Card.Body gap="1.5" p="3" w="full">
+          <Text fontWeight="medium" truncate title={asset.file_name ?? undefined}>
+            {asset.file_name || 'Untitled image'}
+          </Text>
+          <Text fontSize="xs" color="fg.muted">
+            {[...details, `Uploaded ${formatDate(asset.created_at)}`].join(' · ')}
+          </Text>
+          <HStack gap="2" wrap="wrap">
+            <Badge variant="subtle">
+              {asset.crops.length} {asset.crops.length === 1 ? 'crop' : 'crops'}
+            </Badge>
+            {asset.missingAlt && (
+              <Badge variant="outline" color="fg.muted">
+                No description
+              </Badge>
+            )}
+            {asset.usedOn.length > 0 ? (
+              <Badge colorPalette="green" variant="subtle" maxW="full">
+                <Text as="span" truncate>
+                  Used on {asset.usedOn.map((page) => page.title).join(', ')}
+                </Text>
+              </Badge>
+            ) : (
+              <Badge colorPalette="orange" variant="subtle">
+                Not in use
+              </Badge>
+            )}
+          </HStack>
+        </Card.Body>
+      </button>
+    </Card.Root>
   )
 }

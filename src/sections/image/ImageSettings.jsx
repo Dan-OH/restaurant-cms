@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Dialog, Field, Input, Stack, Text } from '@chakra-ui/react'
+import { Alert, Box, Button, Dialog, Stack, Text } from '@chakra-ui/react'
+import AltTextField from '../../admin/AltTextField.jsx'
 import FaIcon from '../../admin/FaIcon.jsx'
 import ImageCropper from '../../admin/ImageCropper.jsx'
 import OptionCards from '../../admin/OptionCards.jsx'
@@ -135,13 +136,7 @@ export default function ImageSettings({ content, onChange, onClose, extra }) {
             helperText={needsCrop ? 'You’ll be asked to crop the image again for the new shape.' : undefined}
           />
 
-          <Field.Root>
-            <Field.Label>Description</Field.Label>
-            <Input value={alt} onChange={(event) => setAlt(event.target.value)} />
-            <Field.HelperText>
-              Describes the image for people using screen readers and for search engines. Not shown on the page.
-            </Field.HelperText>
-          </Field.Root>
+          <AltTextField value={alt} onChange={setAlt} />
 
           {extra?.render(extraValues, (name, value) => setExtraValues((current) => ({ ...current, [name]: value })))}
         </Stack>

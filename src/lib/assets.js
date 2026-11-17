@@ -4,7 +4,7 @@ import { pagePaths } from './pageTree.js'
 
 // Loads every uploaded image for the Assets page, newest first:
 //
-//   [{ ...asset row, crops: [{ ...crop row, usedOn }], usedOn }]
+//   [{ ...asset row, crops: [{ ...crop row, usedOn }], usedOn, missingAlt, altDiffers }]
 //
 // `usedOn` lists the pages whose saved content shows that file: [{ id, title, path,
 // published }]. An asset's own `usedOn` covers all of its crops (and the original, should a
@@ -40,8 +40,22 @@ export async function loadAssets() {
       .sort((a, b) => a.title.localeCompare(b.title))
   }
 
+  // Asset id -> the descriptions of the sections showing it, to spot places without one.
+  const sectionAlts = new Map()
+  for (const section of sections.data) {
+    for (const id of assetIdsIn(section.content)) {
+      if (!sectionAlts.has(id)) sectionAlts.set(id, [])
+      sectionAlts.get(id).push((section.content.alt ?? '').trim())
+    }
+  }
+
   return assets.data.map(({ asset_crops: crops, ...asset }) => ({
     ...asset,
+    alt: asset.alt ?? '',
+    // True when the image has no description, or is shown somewhere without one.
+    missingAlt: !asset.alt?.trim() || (sectionAlts.get(asset.id) ?? []).some((alt) => !alt),
+    // True when some page shows it with a different description from the image's own.
+    altDiffers: (sectionAlts.get(asset.id) ?? []).some((alt) => alt && alt !== (asset.alt ?? '').trim()),
     crops: crops
       .map((crop) => ({ ...crop, usedOn: usedOn(crop.path) }))
       .sort((a, b) => b.created_at.localeCompare(a.created_at)),
@@ -71,6 +85,33 @@ export async function deleteAsset(assetId) {
   await deleteAssetFiles(assetId)
   const { error: rowError } = await supabase.from('assets').delete().eq('id', assetId)
   if (rowError) throw new Error(rowError.message)
+}
+
+// Sets an image's description (alt text), everywhere it is shown.
+export function setAssetDescription(assetId, alt) {
+  return syncDescriptions(new Map([[assetId, alt.trim()]]))
+}
+
+// Takes a Map of asset id -> description, stores each on its asset, and copies it into every
+// page section that shows that image (sections keep their own copy, which the site uses).
+export async function syncDescriptions(descriptions) {
+  if (!descriptions.size) return
+  const updates = [...descriptions].map(([id, alt]) => supabase.from('assets').update({ alt }).eq('id', id))
+
+  const { data: sections, error } = await supabase.from('page_sections').select('id, content')
+  if (error) throw new Error(error.message)
+  for (const section of sections) {
+    const id = [...assetIdsIn(section.content)].find((assetId) => descriptions.has(assetId))
+    if (id === undefined || section.content.alt === descriptions.get(id)) continue
+    updates.push(
+      supabase
+        .from('page_sections')
+        .update({ content: { ...section.content, alt: descriptions.get(id) } })
+        .eq('id', section.id),
+    )
+  }
+  const failed = (await Promise.all(updates)).find((result) => result.error)
+  if (failed) throw new Error(failed.error.message)
 }
 
 // Deletes those of the given assets that no saved page section uses any more.
