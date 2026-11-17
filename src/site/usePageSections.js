@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { assetIdsIn } from '../lib/images.js'
 import { supabase } from '../lib/supabase.js'
 
 // Loads the sections of one page and, while `editing` is true, holds the editor's unsaved
@@ -11,6 +12,7 @@ import { supabase } from '../lib/supabase.js'
 //   setSections  Change the working copy: setSections((current) => next).
 //   dirty        True when the working copy differs from what is saved.
 //   save()       Writes the working copy to the database; resolves to true on success.
+//                Images of removed sections are then deleted, unless another page uses them.
 //   saving, error
 export function usePageSections(pageId, editing) {
   // Both are tagged with the page they belong to, so one page's sections are never shown,
@@ -19,6 +21,10 @@ export function usePageSections(pageId, editing) {
   const [draft, setDraft] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  // Images that were in sections removed since the last save, including ones uploaded to a
+  // section that was removed before it was ever saved. Checked (and deleted if nothing uses
+  // them any more) after saving.
+  const removedAssets = useRef(new Set())
 
   useEffect(() => {
     if (!pageId) return
@@ -57,7 +63,12 @@ export function usePageSections(pageId, editing) {
     (update) => {
       setDraft((current) => {
         const sections = current && current.pageId === pageId ? current.sections : (saved ?? [])
-        return { pageId, sections: update(sections) }
+        const next = update(sections)
+        const keptIds = new Set(next.map((section) => section.id))
+        for (const section of sections) {
+          if (!keptIds.has(section.id)) assetIdsIn(section.content, removedAssets.current)
+        }
+        return { pageId, sections: next }
       })
     },
     [pageId, saved],
@@ -92,7 +103,21 @@ export function usePageSections(pageId, editing) {
       return false
     }
     setLoaded({ pageId, sections: working })
+    deleteRemovedImages(saved.filter((section) => removedIds.includes(section.id)))
     return true
+  }
+
+  // Runs in the background after a save. Only images no saved section anywhere uses are
+  // deleted, so one still shown on another page (or still in this one) is kept.
+  function deleteRemovedImages(removedSections) {
+    const candidates = new Set(removedAssets.current)
+    for (const section of removedSections) assetIdsIn(section.content, candidates)
+    removedAssets.current = new Set()
+    if (!candidates.size) return
+    // The asset helpers are admin-only code, so visitors never download them.
+    import('../lib/assets.js')
+      .then(({ deleteUnusedAssets }) => deleteUnusedAssets(candidates))
+      .catch((problem) => console.error('Could not delete unused images', problem))
   }
 
   return {

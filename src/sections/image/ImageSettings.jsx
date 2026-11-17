@@ -4,7 +4,7 @@ import FaIcon from '../../admin/FaIcon.jsx'
 import ImageCropper from '../../admin/ImageCropper.jsx'
 import OptionCards from '../../admin/OptionCards.jsx'
 import { optionColor } from '../../admin/optionColor.js'
-import { cropImage, downloadOriginal, uploadCropped } from '../../lib/images.js'
+import { downloadOriginal, uploadCrop } from '../../lib/images.js'
 import { IMAGE_PRESETS, getImagePreset } from '../imagePresets.js'
 
 // Settings for a section that has an image, shown inside the settings dialog (see
@@ -59,7 +59,7 @@ export default function ImageSettings({ content, onChange, onClose, extra }) {
     setError('')
     setBusy(true)
     try {
-      const cropped = await uploadCropped(content.original, await cropImage(original, area, preset))
+      const cropped = await uploadCrop(content.original, original, area, preset)
       applyValues()
       onChange('cropped', cropped)
       onClose()

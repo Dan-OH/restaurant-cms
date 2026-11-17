@@ -12,7 +12,10 @@ const PRODUCT_NAME = 'Site admin'
 const TOP_BAR_HEIGHT = '3.5rem'
 
 // Sidebar links. To add a dashboard section, add an entry here and a matching <Route> in AdminApp.jsx.
-const NAV_ITEMS = [{ label: 'Pages', to: '/admin/pages' }]
+const NAV_ITEMS = [
+  { label: 'Pages', to: '/admin/pages' },
+  { label: 'Assets', to: '/admin/assets' },
+]
 
 function SidebarLink({ item }) {
   const { pathname } = useLocation()

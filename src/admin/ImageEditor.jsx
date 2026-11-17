@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Box, Button, HStack, Text } from '@chakra-ui/react'
-import { MAX_UPLOAD_BYTES, cropImage, downloadOriginal, uploadCropped, uploadOriginal } from '../lib/images.js'
+import { MAX_UPLOAD_BYTES, downloadOriginal, uploadCrop, uploadOriginal } from '../lib/images.js'
 import { getImagePreset } from '../sections/imagePresets.js'
 import { EMBED_CLASS } from './embeddedSystem.js'
 import FaIcon from './FaIcon.jsx'
@@ -48,7 +48,7 @@ export default function ImageEditor({ content, onChange, image }) {
     try {
       // The original is kept as uploaded, so it can be cropped again for another shape.
       const original = cropping.file ? await uploadOriginal(cropping.file) : content.original
-      const cropped = await uploadCropped(original, await cropImage(cropping.blob, area, preset))
+      const cropped = await uploadCrop(original, cropping.blob, area, preset)
       onChange('original', original)
       onChange('cropped', cropped)
       setCropping(null)

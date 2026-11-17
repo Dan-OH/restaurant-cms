@@ -3,8 +3,8 @@ import AdminPortal from './AdminPortal.jsx'
 import FaIcon from './FaIcon.jsx'
 
 // Asks before removing a section from the page being edited. `label` is the kind of
-// section, e.g. "Text".
-export default function RemoveSectionDialog({ open, label, onClose, onConfirm }) {
+// section, e.g. "Text". `hasImages` adds a note that its images get deleted too.
+export default function RemoveSectionDialog({ open, label, hasImages, onClose, onConfirm }) {
   return (
     <Dialog.Root
       role="alertdialog"
@@ -30,6 +30,12 @@ export default function RemoveSectionDialog({ open, label, onClose, onConfirm })
                 </Text>{' '}
                 section and everything in it from the page. This cannot be undone.
               </Text>
+              {hasImages && (
+                <Text mt="3">
+                  Its image will also be deleted from the site’s assets when you save, unless another page uses
+                  it.
+                </Text>
+              )}
             </Dialog.Body>
             <Dialog.Footer>
               <Button variant="outline" onClick={onClose}>

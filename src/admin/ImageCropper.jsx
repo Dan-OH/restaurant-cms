@@ -16,7 +16,7 @@ function previewUrl(blob) {
 //   source        The image file (a File or Blob).
 //   preset        The shape to crop to: { width, height, label, ratio }.
 //   onAreaChange  Called with the chosen part, { x, y, width, height } in the image's own
-//                 pixels, whenever it changes. Pass that to cropImage() in lib/images.js.
+//                 pixels, whenever it changes. Pass that to uploadCrop() in lib/images.js.
 export default function ImageCropper({ source, preset, onAreaChange }) {
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)

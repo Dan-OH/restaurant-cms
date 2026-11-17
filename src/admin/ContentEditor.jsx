@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Box, Button, ChakraProvider, Flex, IconButton, Text } from '@chakra-ui/react'
+import { assetIdsIn } from '../lib/images.js'
 import { getSectionType } from '../sections/index.js'
 import { EMBED_CLASS, embeddedSystem } from './embeddedSystem.js'
 import FaIcon from './FaIcon.jsx'
@@ -29,7 +30,7 @@ export default function ContentEditor({ sections, onChange }) {
   const [settings, setSettings] = useState({ open: false, sectionId: null })
   // The section waiting for the user to confirm its removal. `label` is kept while the
   // dialog closes so its text doesn't change during the exit animation.
-  const [removal, setRemoval] = useState({ open: false, sectionId: null, label: '' })
+  const [removal, setRemoval] = useState({ open: false, sectionId: null, label: '', hasImages: false })
   // The element dialogs are rendered into. See portalContainer.js.
   const [portalContainer, setPortalContainer] = useState(null)
   // Drag state: the index being dragged and the gap it would be dropped into.
@@ -236,7 +237,14 @@ export default function ContentEditor({ sections, onChange }) {
                     colorPalette="red"
                     aria-label={`Remove ${label} section`}
                     title="Remove section"
-                    onClick={() => setRemoval({ open: true, sectionId: section.id, label })}
+                    onClick={() =>
+                      setRemoval({
+                        open: true,
+                        sectionId: section.id,
+                        label,
+                        hasImages: assetIdsIn(section.content).size > 0,
+                      })
+                    }
                   >
                     {/* f2ed = trash can */}
                     <FaIcon code="f2ed" />
@@ -277,6 +285,7 @@ export default function ContentEditor({ sections, onChange }) {
         <RemoveSectionDialog
           open={removal.open}
           label={removal.label}
+          hasImages={removal.hasImages}
           onClose={() => setRemoval((current) => ({ ...current, open: false }))}
           onConfirm={() => {
             removeSection(removal.sectionId)
