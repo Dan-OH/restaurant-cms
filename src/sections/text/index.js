@@ -1,4 +1,5 @@
 import { lazy } from 'react'
+import { textHeadings } from './parts.js'
 import TextSection from './TextSection.jsx'
 
 export default {
@@ -9,5 +10,6 @@ export default {
   // The text itself is stored per column, as it is written.
   defaultContent: { layout: 'one', width: 'medium' },
   Render: TextSection,
+  headings: textHeadings,
   Settings: lazy(() => import('./TextSettings.jsx')),
 }

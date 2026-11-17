@@ -1,29 +1,28 @@
 import EditableHeading from '../EditableHeading.jsx'
 import RichText from '../RichText.jsx'
-import { isEmptyDoc, textToDoc } from '../richText.js'
-import { COLUMN_NAMES, FULL_WIDTH, HEADING_LEVELS, getHeadingLevel, getTextLayout, getTextWidth } from './layouts.js'
+import { splitLevels } from '../headings.js'
+import { isEmptyDoc } from '../richText.js'
+import { FULL_WIDTH, HEADING_LEVELS, getTextWidth } from './layouts.js'
+import { textParts } from './parts.js'
 import './text.css'
 
 // An optional heading, then formatted text in one, two or three columns (see layouts.js).
 // The heading sits above all the columns; its level is picked from the toolbar that floats
 // above it while it is being typed into. The layout, and the width of a one-column section,
 // are chosen in the section's settings.
-export default function TextSection({ content, onChange }) {
-  const layout = getTextLayout(content.layout)
+export default function TextSection({ content, onChange, headingLevels }) {
+  const { layout, columns, hasHeading, headingLevel } = textParts(content)
   const single = layout.columns.length === 1
-
-  const columns = layout.columns.map((_, index) => {
-    const name = COLUMN_NAMES[index]
-    // Text sections written before formatting existed stored plain text in `text`.
-    const value = content[name] ?? (index === 0 && content.text !== undefined ? textToDoc(content.text) : undefined)
-    return { name, value }
-  })
-
-  const hasHeading = Boolean(content.heading?.trim())
-  const headingLevel = getHeadingLevel(content.headingLevel).id
 
   // Nothing to show visitors until something has been written.
   if (!onChange && !hasHeading && columns.every((column) => isEmptyDoc(column.value))) return null
+
+  // On the live site, which element each heading uses: the section's heading first, then the
+  // headings in each column, in the same order as textHeadings() in parts.js lists them.
+  const [headingTag, ...columnLevels] = splitLevels(headingLevels, [
+    hasHeading ? 1 : 0,
+    ...columns.map((column) => column.headings.length),
+  ])
 
   return (
     <section
@@ -42,6 +41,7 @@ export default function TextSection({ content, onChange }) {
           className="section-text-heading"
           value={content.heading}
           level={headingLevel}
+          tagLevel={headingTag?.[0]}
           levels={HEADING_LEVELS}
           onChange={onChange && ((heading) => onChange('heading', heading))}
           onLevelChange={onChange && ((level) => onChange('headingLevel', level))}
@@ -62,6 +62,7 @@ export default function TextSection({ content, onChange }) {
               })
             }
             placeholder="Write something…"
+            headingLevels={columnLevels[index]}
           />
         ))}
       </div>

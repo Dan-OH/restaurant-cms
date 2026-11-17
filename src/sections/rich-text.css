@@ -7,23 +7,27 @@
   margin: 0 0 1em;
 }
 
-.rich-text h1,
-.rich-text h2,
-.rich-text h3 {
+.rich-text :is(h1, h2, h3, h4, h5, h6) {
   margin: 1.4em 0 0.5em;
   font-weight: 700;
   line-height: 1.25;
 }
 
-.rich-text h1 {
+/* Heading sizes follow the level the editor chose, never the element: on the live site the
+   element's level is adjusted for the page's outline (see headings.js), so the sizes are set
+   by class there. Inside the editor (.tiptap) the element is always the chosen level. */
+.rich-text .tiptap h1,
+.rich-text .rich-text-h1 {
   font-size: 2.25rem;
 }
 
-.rich-text h2 {
+.rich-text .tiptap h2,
+.rich-text .rich-text-h2 {
   font-size: 1.625rem;
 }
 
-.rich-text h3 {
+.rich-text .tiptap h3,
+.rich-text .rich-text-h3 {
   font-size: 1.25rem;
 }
 

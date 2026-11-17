@@ -27,3 +27,23 @@ export function isEmptyDoc(node) {
   if (node.type === 'text') return !node.text?.trim()
   return (node.content ?? []).every(isEmptyDoc)
 }
+
+// The level chosen for a heading node in the editor (1 to 6).
+export function headingLevelOf(node) {
+  return Math.min(Math.max(Number(node.attrs?.level) || 2, 1), 6)
+}
+
+// The chosen levels of the headings in a document, in the order they appear. Empty
+// headings are left out: they aren't drawn as headings (see RichText.jsx).
+export function richTextHeadings(doc) {
+  const levels = []
+  function walk(node) {
+    if (node.type === 'heading') {
+      if (!isEmptyDoc(node)) levels.push(headingLevelOf(node))
+      return
+    }
+    node.content?.forEach(walk)
+  }
+  if (doc) walk(doc)
+  return levels
+}

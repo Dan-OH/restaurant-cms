@@ -8,7 +8,9 @@ const HeadingLevelToolbar = lazy(() => import('../admin/HeadingLevelToolbar.jsx'
 // has the cursor, a small toolbar floats above it for choosing its level.
 //
 //   value          The heading text.
-//   level          The heading level, e.g. 2 for an <h2>.
+//   level          The level chosen for the heading, e.g. 2. Sets its look.
+//   tagLevel       On the live site, the element level to use instead (see headings.js).
+//                  The look still follows `level`.
 //   levels         The levels on offer: [{ id, label }], e.g. { id: 2, label: 'Heading 2' }.
 //   onChange       Called with the new text. Pass it (and onLevelChange) only while editing.
 //   onLevelChange  Called with the chosen level.
@@ -17,6 +19,7 @@ const HeadingLevelToolbar = lazy(() => import('../admin/HeadingLevelToolbar.jsx'
 export default function EditableHeading({
   value,
   level,
+  tagLevel,
   levels,
   onChange,
   onLevelChange,
@@ -27,7 +30,7 @@ export default function EditableHeading({
 
   const heading = (
     <EditableText
-      as={`h${level}`}
+      as={`h${tagLevel ?? level}`}
       className={`${className} ${className}-${level}`}
       value={value}
       onChange={onChange}

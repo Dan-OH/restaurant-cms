@@ -5,7 +5,7 @@ import './image-text.css'
 
 // An image and a block of formatted text, side by side. On narrow screens they stack,
 // image first.
-export default function ImageTextSection({ content, onChange }) {
+export default function ImageTextSection({ content, onChange, headingLevels }) {
   const editing = Boolean(onChange)
   // While editing both halves always show, so each can be filled in. Visitors only get
   // the halves that have something in them.
@@ -27,6 +27,7 @@ export default function ImageTextSection({ content, onChange }) {
           <RichText
             value={content.body}
             onChange={onChange && ((body) => onChange('body', body))}
+            headingLevels={headingLevels}
             placeholder="Write something…"
           />
         </div>

@@ -12,6 +12,9 @@
 //   Render          React component that draws the section, on the public site and in the
 //                   page editor alike. It receives:
 //                     content   The section's saved values.
+//                     headingLevels  On the live site only: the element level for each of
+//                               the section's headings (see `headings` below). Headings are
+//                               styled by their chosen level and drawn with this element.
 //                     onChange  Only while the page is being edited: onChange(name, value)
 //                               stores value as content[name]. Hand it to <RichText>
 //                               (formatted text), <EditableText> (plain text) or
@@ -20,6 +23,12 @@
 //                   Plain HTML and CSS only: it must not use Chakra, because visitors
 //                   never load it. Editing-only parts that need Chakra (see EditableImage.jsx) go
 //                   in a separate file loaded with lazy(), and only when onChange is given.
+//   headings        Optional, for sections that contain headings: (content) => the levels
+//                   chosen for its headings, in the order the section draws them, counting
+//                   only headings visitors will see. The page uses this to give each heading
+//                   the right element (see headings.js), and passes the results back to
+//                   Render as `headingLevels`, in the same order. Without it the section's
+//                   headings are left out of that and the page outline may be wrong.
 //   Settings        Optional. Options that can't be edited in place. When present, the
 //                   section gets a settings button while editing, which opens a dialog
 //                   showing this component. It is admin UI, so it may use Chakra, but it
